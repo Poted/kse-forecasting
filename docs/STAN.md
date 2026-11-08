@@ -13,6 +13,7 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 **Wyniki:** dane pobrane 14.06.2024–08.11.2026 (plan i RCE do 09.11): `his-wlk-cal` 84 292 wiersze, `pdgopkd` 84 388, `poze-redoze` 74 212 (od 27.09.2024), `rce-pln` 84 388, pogoda 168 576. Brakujące doby: 0, doby z błędną liczbą kwadransów: 0, duplikaty: 0, braki pogody: 0. Raport: `docs/kompletnosc_danych.md`. `pytest`: 26 passed, `ruff`: bez błędów.
 
 **Problemy:** sieć środowiska blokowała API PSE i Open-Meteo — dodane hosty `api.raporty.pse.pl`, `previous-runs-api.open-meteo.com`, `historical-forecast-api.open-meteo.com` do środowiska „KSE” (za zgodą użytkownika).
+- PR do `main`: https://github.com/Poted/kse-forecasting/pull/1 — scalenie z sesji zablokowane przez ustawienia uprawnień Claude Code (scalanie bez przeglądu). PR zostaje otwarty; scala użytkownik.
 
 **Pytania do kierownika (nieblokujące):**
 - `his-wlk-cal` zwraca też bieżącą dobę D z wykonaniem do bieżącego kwadransu (np. 08.11 o 16:07 UTC — dane do 15:45 UTC). Tabela w `00_fundament.md` sekcja 3 podaje tylko wykonanie za D−1. Czy w P2.5 cechy mają korzystać wyłącznie z D−1 (zgodnie z obecnym ustaleniem), czy rozważyć wykonanie z dnia D do ok. 11:45? Moment publikacji danych śróddziennych historycznie nie jest sprawdzony (API trzyma ostatni `publication_ts`).
