@@ -93,6 +93,7 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # bez wpisu dla każdego zapytania
 
     if args.cmd == "pse":
         download_pse(args.data_dir, args.report or list(pse.REPORTS), args.start, args.end)
