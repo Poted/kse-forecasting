@@ -17,6 +17,9 @@ dependencies = [
     "plotly",
 ]
 
+[project.scripts]
+kse-data = "common.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest",

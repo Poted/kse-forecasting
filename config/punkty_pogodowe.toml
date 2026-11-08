@@ -1,0 +1,42 @@
+# Punkty pogodowe (decyzja 08.11.2026, context/00_fundament.md sekcja 5).
+# Współrzędne: centra miast (WGS84). Open-Meteo zwraca wartości dla najbliższego węzła siatki modelu.
+
+[[punkt]]
+nazwa = "Warszawa"
+lat = 52.2297
+lon = 21.0122
+
+[[punkt]]
+nazwa = "Kraków"
+lat = 50.0647
+lon = 19.9450
+
+[[punkt]]
+nazwa = "Wrocław"
+lat = 51.1079
+lon = 17.0385
+
+[[punkt]]
+nazwa = "Poznań"
+lat = 52.4064
+lon = 16.9252
+
+[[punkt]]
+nazwa = "Gdańsk"
+lat = 54.3520
+lon = 18.6466
+
+[[punkt]]
+nazwa = "Rzeszów"
+lat = 50.0412
+lon = 21.9991
+
+[[punkt]]
+nazwa = "Białystok"
+lat = 53.1325
+lon = 23.1688
+
+[[punkt]]
+nazwa = "Szczecin"
+lat = 53.4285
+lon = 14.5528
