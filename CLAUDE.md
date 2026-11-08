@@ -10,17 +10,24 @@ Kolejność: P2 (etapy P2.1–P2.7) → tag `p2-v1.0` → inż (I1–I6) na `mai
 Claude Code prowadzi realizację samodzielnie według planu etapów w `context/03_plan_wykonania.md`. Użytkownik nie przekazuje poleceń z innych rozmów — wystarczy „kontynuuj”.
 
 Na początku każdej sesji:
-1. `git pull`. Przeczytaj `docs/STAN.md` i tabelę „Stan” w `context/03_plan_wykonania.md`.
+1. Ustal punkt startu (sekcja „Gałęzie”). Przeczytaj `docs/STAN.md` i tabelę „Stan” w `context/03_plan_wykonania.md`.
 2. Bieżący etap = pierwszy w tabeli „Stan” bez statusu `zrobione`.
 3. Jeśli nie ma pliku `context/zadania/<etap>.md` — utwórz go na podstawie `03_plan_wykonania.md` (format jak `P2.1.md`: zakres, „Gotowe, gdy”, decyzje, z których korzysta).
 4. Decyzje: jeśli etap wymaga rozstrzygnięcia pytania otwartego (`00_fundament.md` sekcja 6, `03_plan_wykonania.md`), a decyzji nie ma w `00_fundament.md` sekcja 5 — dopisz pytanie w `docs/STAN.md` (sekcja „Decyzje potrzebne”), napisz to użytkownikowi i zatrzymaj się. Jeśli użytkownik rozstrzygnie je w sesji — dopisz decyzję z datą do `00_fundament.md` sekcja 5.
 5. Wykonaj etap. Duże etapy dziel na kroki; commit po każdym kroku.
 6. Dokumentuj etap w `docs/etapy/<etap>.md`: co powstało, jak działa, decyzje techniczne i ich powody, jak uruchomić, wyniki (liczby, wykresy). Pisz tak, żeby użytkownik mógł to zrozumieć i wykorzystać w dokumentacji P2 i w pracy inżynierskiej.
 7. Sprawdź „Gotowe, gdy”. Jeśli nie da się go spełnić — opisz dlaczego w `docs/STAN.md` i zatrzymaj się.
-8. Wpis w `docs/STAN.md` (na górze: data, etap, co zrobione, wyniki, problemy, pytania). Status `zrobione` w pliku zadania i w tabeli „Stan”. Commit + push na `main`.
+8. Wpis w `docs/STAN.md` (na górze: data, etap, co zrobione, wyniki, problemy, pytania). Status `zrobione` w pliku zadania i w tabeli „Stan”. Commit + push, PR do `main` (sekcja „Gałęzie”).
 9. Przejdź do następnego etapu (krok 2), chyba że użytkownik poprosił tylko o jeden etap.
 
 Wyjątek: tag `p2-v1.0` (koniec P2) — tylko po akceptacji użytkownika.
+
+## Gałęzie
+- Jeśli możesz pushować na `main` — pracuj na `main`.
+- Jeśli środowisko pozwala tylko na gałąź sesji (`claude/...`):
+  - Start: `git fetch origin`; sprawdź otwarte PR-y do `main` (`gh pr list`). Jeśli jest niescalony PR z poprzedniej sesji — zacznij od jego gałęzi (scal ją do swojej gałęzi sesji). Inaczej zacznij od `origin/main`.
+  - Po każdym etapie: push gałęzi sesji, PR do `main` (jeden PR na sesję, aktualizowany), spróbuj scalić (`gh pr merge --merge`).
+  - Jeśli scalenie jest niedozwolone — zostaw PR otwarty, zapisz to w `docs/STAN.md` i kontynuuj na tej samej gałęzi. Scala użytkownik albo rozmowa w projekcie.
 
 ## Zasady
 - Fakty, nie przypuszczenia. Znaczenie pól sprawdzaj w danych lub w https://api.raporty.pse.pl/EndpointsMap.pdf. Czego nie wiesz — wpisz jako pytanie w `docs/STAN.md`.

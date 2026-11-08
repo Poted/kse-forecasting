@@ -70,7 +70,7 @@ Do decyzji przed P2.5.
 |---|---|
 | Etap | Status | Wymaga decyzji |
 |---|---|---|
-| P2.1 | do zrobienia | — |
+| P2.1 | zrobione (8.11.2026) | — |
 | P2.2 | nierozpoczęty | punkty pogodowe |
 | P2.3 | nierozpoczęty | — |
 | P2.4 | nierozpoczęty | — |
