@@ -1,22 +1,21 @@
-# 03 · Plan wykonania (dokument dla kierownika)
+# 03 · Plan wykonania
 
-Ten dokument prowadzi realizację obu prac. Każda nowa rozmowa, która nadzoruje pracę, czyta najpierw: `00_fundament.md`, ten dokument, `04_komunikacja.md`, `01_dane.md`, potem `docs/STAN.md`.
+Plan etapów obu prac. Claude Code realizuje go samodzielnie (protokół w `CLAUDE.md`). Rozmowa w projekcie claude.ai czyta najpierw: `00_fundament.md`, ten dokument, `04_komunikacja.md`, `01_dane.md`, potem `docs/STAN.md`.
 
 ## Zasady prowadzenia
 - Wyłącznie fakty. Propozycje oznaczone jako propozycje. Decyzje podejmuje użytkownik; zapis w `00_fundament.md` (sekcja Decyzje).
-- Kolejność: P2 → tag `p2-v1.0` → inż. Etap jest zakończony dopiero po spełnieniu warunku „Gotowe, gdy”.
-- Każdy etap = plik zadania w `context/zadania/` (format jak `P2.1.md`). Kierownik wystawia kolejne zadanie po weryfikacji poprzedniego.
-- Przed wystawieniem zadania kierownik omawia etap z użytkownikiem, tak żeby użytkownik rozumiał, co powstaje.
+- Kolejność: P2 → tag `p2-v1.0` (po akceptacji użytkownika) → inż. Etap jest zakończony dopiero po spełnieniu warunku „Gotowe, gdy”.
+- Każdy etap = plik w `context/zadania/` (tworzy go Claude Code z tej tabeli) + dokumentacja w `docs/etapy/`.
 - Po każdym etapie: aktualizacja tabeli „Stan” poniżej.
-- Bez dodatków spoza zakresu (żadnych przypomnień, szablonów wiadomości itp.).
+- Bez dodatków spoza zakresu.
 
 ## Narzędzia
 | Narzędzie | Do czego | Etapy |
 |---|---|---|
 | Claude Code | cały kod: pobieranie danych, baza, cechy, LightGBM, dashboard, testy, dokumentacja techniczna (README, ERD, diagramy) | wszystkie |
 | Google Colab | trening i strojenie sieci MLP/LSTM (GPU) | tylko I3 |
-| Rozmowa-kierownik (projekt claude.ai „Inżynierka”) | plan, zadania, weryfikacja, omówienia, pomoc przy tekście | równolegle |
-| GitHub `Poted/kse-forecasting` | kod, `context/`, zadania, raporty, tagi | wszystkie |
+| Rozmowa w projekcie claude.ai „Inżynierka” | zarządzanie projektem, przegląd kodu i wyników, decyzje, tekst pracy i dokumentacji P2 | równolegle |
+| GitHub `Poted/kse-forecasting` | kod, `context/`, zadania, raporty, dokumentacja etapów, tagi | wszystkie |
 | Dysk Google | dane i modele dla Colaba | I3 |
 
 Uzasadnienie Colaba tylko w I3: zbiór ma ok. 83,5 tys. kwadransów (870 dni × 96). LightGBM trenuje się na CPU. Sieci również można trenować na CPU; GPU przyspiesza strojenie (ocena, nie pomiar).
@@ -69,7 +68,14 @@ Do decyzji przed P2.5.
 ## Stan
 | Etap | Status |
 |---|---|
-| P2.1 | zadanie wystawione (8.11.2026) |
-| P2.2–P2.7 | nierozpoczęte |
-| I1–I6 | nierozpoczęte |
-| Tekst inż | nierozpoczęty |
+| Etap | Status | Wymaga decyzji |
+|---|---|---|
+| P2.1 | do zrobienia | — |
+| P2.2 | nierozpoczęty | punkty pogodowe |
+| P2.3 | nierozpoczęty | — |
+| P2.4 | nierozpoczęty | — |
+| P2.5 | nierozpoczęty | wariant historycznych prognoz |
+| P2.6 | nierozpoczęty | prognoza na jutro: ręcznie / automatycznie |
+| P2.7 | nierozpoczęty | akceptacja tagu `p2-v1.0` |
+| I1–I6 | nierozpoczęte | — |
+| Tekst inż | nierozpoczęty (prowadzony w rozmowie w projekcie) | — |
