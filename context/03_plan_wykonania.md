@@ -66,7 +66,7 @@ Inż uczy się na danych o ograniczeniach od 27.09.2024. Wybrany wariant: P2 gen
 | Etap | Status | Wymaga decyzji |
 |---|---|---|
 | P2.1 | zrobione (8.11.2026) | — |
-| P2.2 | nierozpoczęty | — (punkty pogodowe: decyzja 8.11) |
+| P2.2 | zrobione (8.11.2026) | — (punkty pogodowe: decyzja 8.11) |
 | P2.3 | nierozpoczęty | — |
 | P2.4 | nierozpoczęty | — |
 | P2.5 | nierozpoczęty | — (historyczne prognozy od 27.09.2024: decyzja 8.11) |

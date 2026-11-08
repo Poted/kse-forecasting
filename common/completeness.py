@@ -126,7 +126,8 @@ def to_markdown(pse: list[PseCheck], weather: WeatherCheck | None, generated: da
             lines.append("- Doby z inną liczbą kwadransów: —")
         if c.null_share:
             shares = ", ".join(
-                f"`{k}` {v:.1%}" for k, v in sorted(c.null_share.items(), key=lambda kv: -kv[1])
+                f"`{k}` {v:.1%} ({round(v * c.rows)})"
+                for k, v in sorted(c.null_share.items(), key=lambda kv: -kv[1])
             )
             lines.append(f"- Udział wartości pustych (kolumny z brakami): {shares}")
         else:

@@ -29,6 +29,14 @@ na `postgresql+psycopg://kse:<hasło>@localhost:5432/kse`.
 
 Aplikacja odczytuje `DATABASE_URL` z `.env` (`common/config.py`); zmienna środowiskowa ma pierwszeństwo.
 
+### Pobieranie danych
+```bash
+uv run kse-data pse        # raporty PSE → data/raw/pse/
+uv run kse-data weather    # Open-Meteo → data/raw/openmeteo/
+uv run kse-data report --out docs/kompletnosc_danych.md
+```
+Szczegóły: `docs/etapy/P2.2.md`.
+
 ### Testy i lint
 ```bash
 uv run pytest
