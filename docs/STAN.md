@@ -7,6 +7,11 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-08 · decyzje dla P2.2, P2.5, P2.6 (rozmowa w projekcie)
+- Zapisane w `context/00_fundament.md` sekcja 5: punkty pogodowe, historyczne prognozy od 27.09.2024, prognoza na jutro ręcznie.
+- `CLAUDE.md`: operacje na PR przez REST (`gh api`), bo GraphQL nie działa w sesjach.
+- Następne: P2.2.
+
 ## 2026-11-08 · scalenie P2.1 + gałęzie sesji (rozmowa w projekcie)
 - Gałąź `claude/stoic-volta-sr0s01` (P2.1) scalona do `main`.
 - Odpowiedź na pytanie o gałęzie: praca na gałęzi sesji, po każdym etapie PR do `main` i próba scalenia — zasady w `CLAUDE.md` (sekcja „Gałęzie”).

@@ -133,12 +133,12 @@ Wyniki sprawdzenia danych (1.11.2026): ograniczenia PV w 444 z 765 dni, 12 480 k
 | 01.11 | Brak logowania użytkowników |
 | 02.11 | Prognoza P2 o 12:00 dnia D na dobę D+1 |
 | 08.11 | Kolejność: P2, potem inż; jedno repozytorium `Poted/kse-forecasting` (prywatne), gałąź `main`, koniec P2 = tag `p2-v1.0` |
-| 08.11 | Komunikacja kierownik ↔ Claude Code przez repozytorium (`context/zadania/`, `docs/STAN.md`) |
+| 08.11 | Komunikacja przez repozytorium; Claude Code realizuje etapy samodzielnie (`CLAUDE.md`) |
+| 08.11 | Punkty pogodowe (P2.2): Warszawa, Kraków, Wrocław, Poznań, Gdańsk, Rzeszów, Białystok, Szczecin; wartości uśrednione dla kraju. Wagi wg mocy PV w regionach — możliwe rozszerzenie później |
+| 08.11 | Historyczne prognozy P2 (P2.5): od 27.09.2024, model uczony na dostępnej historii od 14.06.2024 (wariant 1). Słabsze pierwsze miesiące raportowane w metrykach |
+| 08.11 | Prognoza na jutro (P2.6): uruchamiana ręcznie — przycisk w dashboardzie i polecenie CLI; bez harmonogramu |
 
 ## 6. Pytania otwarte
-- Od kiedy P2 generuje historyczne prognozy (dane PSE w API od 14.06.2024, dane o ograniczeniach od 27.09.2024) — warianty w `03_plan_wykonania.md`.
-- Punkty pogodowe (które lokalizacje).
-- Uruchamianie prognozy na jutro: ręcznie czy automatycznie.
 - Dokładna data oddania pracy inżynierskiej; zasady uczelni dot. AI; wymagany szablon pracy.
 
 ## 7. Linki

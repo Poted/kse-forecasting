@@ -57,13 +57,8 @@ Komunikacja: `04_komunikacja.md`.
 
 **Tekst pracy:** część teoretyczna może powstawać od początku, równolegle z P2. Część praktyczna — po I5, na podstawie dokumentacji i wyników.
 
-## Pytanie otwarte wpływające na P2.5 i I1
-Inż uczy się na danych o ograniczeniach od 27.09.2024. Historyczne prognozy P2 muszą pokrywać ten okres, a dane PSE w API zaczynają się 14.06.2024 (ok. 3,5 miesiąca historii przed 27.09.2024). Warianty:
-1. P2 prognozuje historycznie od 27.09.2024 na krótkiej historii (słabsze pierwsze miesiące).
-2. Pobranie starszych danych z raportów historycznych PSE (inny format; niesprawdzone).
-3. Inż używa w tym okresie prognozy PSE z planu dobowego zamiast prognozy P2.
-
-Do decyzji przed P2.5.
+## Historyczne prognozy P2 (rozstrzygnięte 8.11.2026)
+Inż uczy się na danych o ograniczeniach od 27.09.2024. Wybrany wariant: P2 generuje historyczne prognozy od 27.09.2024, model uczony na dostępnej historii od 14.06.2024 (walidacja krocząca, model douczany na rosnącym oknie). Odrzucone: starsze dane z raportów historycznych PSE (inny format, niesprawdzone); prognoza PSE zamiast P2.
 
 ## Stan
 | Etap | Status |
@@ -71,11 +66,11 @@ Do decyzji przed P2.5.
 | Etap | Status | Wymaga decyzji |
 |---|---|---|
 | P2.1 | zrobione (8.11.2026) | — |
-| P2.2 | nierozpoczęty | punkty pogodowe |
+| P2.2 | nierozpoczęty | — (punkty pogodowe: decyzja 8.11) |
 | P2.3 | nierozpoczęty | — |
 | P2.4 | nierozpoczęty | — |
-| P2.5 | nierozpoczęty | wariant historycznych prognoz |
-| P2.6 | nierozpoczęty | prognoza na jutro: ręcznie / automatycznie |
+| P2.5 | nierozpoczęty | — (historyczne prognozy od 27.09.2024: decyzja 8.11) |
+| P2.6 | nierozpoczęty | — (prognoza na jutro ręcznie: decyzja 8.11) |
 | P2.7 | nierozpoczęty | akceptacja tagu `p2-v1.0` |
 | I1–I6 | nierozpoczęte | — |
 | Tekst inż | nierozpoczęty (prowadzony w rozmowie w projekcie) | — |

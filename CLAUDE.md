@@ -25,8 +25,8 @@ Wyjątek: tag `p2-v1.0` (koniec P2) — tylko po akceptacji użytkownika.
 ## Gałęzie
 - Jeśli możesz pushować na `main` — pracuj na `main`.
 - Jeśli środowisko pozwala tylko na gałąź sesji (`claude/...`):
-  - Start: `git fetch origin`; sprawdź otwarte PR-y do `main` (`gh pr list`). Jeśli jest niescalony PR z poprzedniej sesji — zacznij od jego gałęzi (scal ją do swojej gałęzi sesji). Inaczej zacznij od `origin/main`.
-  - Po każdym etapie: push gałęzi sesji, PR do `main` (jeden PR na sesję, aktualizowany), spróbuj scalić (`gh pr merge --merge`).
+  - Start: `git fetch origin`; sprawdź otwarte PR-y do `main` (`gh api repos/Poted/kse-forecasting/pulls`). Jeśli jest niescalony PR z poprzedniej sesji — zacznij od jego gałęzi (scal ją do swojej gałęzi sesji). Inaczej zacznij od `origin/main`.
+  - Po każdym etapie: push gałęzi sesji, PR do `main` (jeden PR na sesję, aktualizowany; `gh api -X POST repos/Poted/kse-forecasting/pulls`), spróbuj scalić (`gh api -X PUT repos/Poted/kse-forecasting/pulls/<nr>/merge`). GraphQL (`gh pr ...`) nie działa w sesjach Claude Code — używaj REST (`gh api`).
   - Jeśli scalenie jest niedozwolone — zostaw PR otwarty, zapisz to w `docs/STAN.md` i kontynuuj na tej samej gałęzi. Scala użytkownik albo rozmowa w projekcie.
 
 ## Zasady
