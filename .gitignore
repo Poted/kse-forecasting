@@ -1,0 +1,27 @@
+# Dane i artefakty (kopia na Dysku Google)
+data/
+models/*
+!models/.gitkeep
+*.parquet
+*.pkl
+*.pt
+*.joblib
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Środowisko i sekrety
+.env
+.env.*
+!.env.example
+
+# System / IDE
+.DS_Store
+.idea/
+.vscode/
