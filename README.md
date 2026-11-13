@@ -37,6 +37,13 @@ uv run kse-data report --out docs/kompletnosc_danych.md
 ```
 Szczegóły: `docs/etapy/P2.2.md`.
 
+### Ładowanie do bazy
+```bash
+uv run kse-data load       # schemat + upsert z data/raw/
+uv run kse-data db-check   # zgodność liczby wierszy parquet vs baza
+```
+Schemat i widoki godzinowe: `docs/etapy/P2.3.md`, ERD: `docs/erd.md`.
+
 ### Testy i lint
 ```bash
 uv run pytest
