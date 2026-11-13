@@ -243,3 +243,21 @@ def render_all(df: pd.DataFrame, out_dir: Path) -> dict[str, pd.DataFrame]:
     ]
     (out_dir / "p2_4_tabele.md").write_text("\n".join(text), encoding="utf-8")
     return tables
+
+
+def series_chart(frame: pd.DataFrame, title: str, path: Path, ylabel="MW") -> None:
+    """Przebieg w czasie (oś X: czas lokalny) — wykonanie i prognozy."""
+    fig, ax = plt.subplots(figsize=(10, 4.8))
+    x = frame.index.tz_convert("Europe/Warsaw").tz_localize(None)
+    for color, col in zip(SERIES, frame.columns, strict=False):
+        ax.plot(x, frame[col], color=color, label=str(col))
+    ax.set_title(title, pad=28)
+    ax.set_ylabel(ylabel)
+    _thousands(ax)
+    _legend(ax, len(frame.columns))
+    fig.savefig(path)
+    plt.close(fig)
+
+
+profile_chart = _profile_chart
+monthly_chart = _monthly_chart

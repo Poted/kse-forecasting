@@ -149,3 +149,32 @@ def test_hourly_view_dst_day_and_net_demand(engine_schema, data_dir):
     assert hours["net_demand"].iloc[0] == pytest.approx((raw["demand"] - raw["pv"]).mean())
     weather = query(engine, schema, "SELECT * FROM v_pogoda_h")
     assert len(weather) == 24 and (weather["n_points"] == 2).all()
+
+
+def test_save_runs_and_latest_view(engine_schema):
+    from p2 import backtest
+
+    engine, schema = engine_schema
+    db.init_schema(engine, schema)
+    hours = pd.date_range("2025-06-14 22:00", periods=24, freq="h", tz="UTC")
+    fc = pd.DataFrame(
+        {
+            "target_date": date(2025, 6, 15),
+            "forecast_date": date(2025, 6, 14),
+            "hour_utc": hours,
+            "y": 1000.0,
+            "naive_d1": 1100.0,
+            "naive_week": 900.0,
+            "lightgbm": 1010.0,
+        }
+    )
+    res = backtest.BacktestResult(forecasts=fc, train_info=[{"test_from": "2025-06-15"}])
+    table = pd.DataFrame({"MAE": [100.0, 100.0, 10.0]}, index=list(backtest.MODELS))
+    first = backtest.save_runs(engine, res, table, schema)
+    second = backtest.save_runs(engine, res.__class__(fc.assign(lightgbm=1020.0)), table, schema)
+    assert second["lightgbm"] > first["lightgbm"]
+    latest = query(engine, schema, "SELECT * FROM v_p2_forecast_latest WHERE model = 'lightgbm'")
+    assert len(latest) == 24 and (latest["net_demand_hat"] == 1020.0).all()
+    assert (latest["forecast_moment_utc"] == pd.Timestamp("2025-06-14 10:00", tz="UTC")).all()
+    runs = query(engine, schema, "SELECT model, metrics FROM model_run ORDER BY run_id")
+    assert len(runs) == 6 and runs["metrics"].iloc[2]["MAE"] == 10.0

@@ -185,13 +185,15 @@ def mae_by(fc: pd.DataFrame, by: str) -> pd.DataFrame:
 def code_version() -> str | None:
     try:
         return subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True
+            ["git", "describe", "--always", "--dirty"], capture_output=True, text=True, check=True
         ).stdout.strip()
     except Exception:
         return None
 
 
-def save_runs(engine: Engine, result: BacktestResult, metrics_table: pd.DataFrame) -> dict:
+def save_runs(
+    engine: Engine, result: BacktestResult, metrics_table: pd.DataFrame, schema: str | None = None
+) -> dict:
     """Zapisuje przebiegi (po jednym na model) i prognozy historyczne. Zwraca {model: run_id}."""
     from common import db
 
@@ -199,6 +201,8 @@ def save_runs(engine: Engine, result: BacktestResult, metrics_table: pd.DataFram
     moments = {d: features.forecast_moment_utc(d) for d in fc["forecast_date"].unique()}
     run_ids = {}
     with engine.begin() as conn:
+        if schema:
+            conn.execute(sa.text(f'SET search_path TO "{schema}"'))
         for name in MODELS:
             params = (
                 {"lgbm": LGBM_PARAMS, "features": features.FEATURES}

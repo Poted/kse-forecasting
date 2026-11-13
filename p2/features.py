@@ -44,6 +44,7 @@ FEATURES = [
     "net_daymean_lag2",
     *WEATHER_VARS,
     "rad_day_mean",
+    "pv_est",
 ]
 
 
@@ -129,10 +130,19 @@ def build_day(d: date, actual: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFr
     day2 = t - timedelta(days=2)
     rows["net_daymean_lag2"] = float(net.loc[day2].mean()) if day2 in net.index else np.nan
 
-    wx = _weather_for_hours(available_weather(weather, d), rows["hour_utc"])
+    w_avail = available_weather(weather, d)
+    wx = _weather_for_hours(w_avail, rows["hour_utc"])
     for v in WEATHER_VARS:
         rows[v] = wx[v].to_numpy()
     rows["rad_day_mean"] = rows["shortwave_radiation"].mean()
+
+    # Szacunek PV: (PV / prognozowane promieniowanie) z dób T−8..T−2 × promieniowanie godziny T.
+    # Odzwierciedla przyrost mocy zainstalowanej PV, którego nie ma w samej pogodzie.
+    past = act[act["business_date"].isin(last7)]
+    past_rad = _weather_for_hours(w_avail, past["hour_utc"].reset_index(drop=True))
+    rad_sum = float(np.nansum(past_rad["shortwave_radiation"].to_numpy()))
+    ratio = float(past["pv"].sum()) / rad_sum if rad_sum > 0 else np.nan
+    rows["pv_est"] = ratio * rows["shortwave_radiation"]
 
     ts = pd.Timestamp(t)
     rows["dow"] = ts.day_of_week
