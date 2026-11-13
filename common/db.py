@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -263,18 +264,30 @@ class LoadResult:
     rows: int
 
 
-def load_all(engine: Engine, data_dir: Path, schema: str | None = None) -> list[LoadResult]:
-    """Ładuje wszystkie pliki parquet z `data/raw` do bazy (plik po pliku, upsert)."""
+def load_all(
+    engine: Engine, data_dir: Path, schema: str | None = None, since: date | None = None
+) -> list[LoadResult]:
+    """Ładuje pliki parquet z `data/raw` do bazy (plik po pliku, upsert).
+
+    `since`: tylko pliki miesięcy ≥ miesiąc tej daty (szybkie odświeżenie ostatnich dób).
+    """
+    first = f"{since:%Y-%m}" if since else ""
     results = []
     with engine.begin() as conn:
         if schema:
             conn.execute(sa.text(f'SET search_path TO "{schema}"'))
         for report, table in PSE_TABLES.items():
-            files = sorted((data_dir / "raw" / "pse" / report).glob("*.parquet"))
+            files = [
+                f
+                for f in sorted((data_dir / "raw" / "pse" / report).glob("*.parquet"))
+                if f.stem >= first
+            ]
             n = sum(upsert(conn, table, prepare_pse(pd.read_parquet(f))) for f in files)
             results.append(LoadResult(table.name, len(files), n))
         point_ids = load_points(conn, openmeteo.load_points())
-        files = sorted((data_dir / "raw" / "openmeteo").glob("*.parquet"))
+        files = [
+            f for f in sorted((data_dir / "raw" / "openmeteo").glob("*.parquet")) if f.stem >= first
+        ]
         n = sum(
             upsert(conn, weather_forecast, prepare_weather(pd.read_parquet(f), point_ids))
             for f in files

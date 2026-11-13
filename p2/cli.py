@@ -101,10 +101,25 @@ def main(argv: list[str] | None = None) -> None:
     sub = parser.add_subparsers(dest="cmd", required=True)
     p_bt = sub.add_parser("backtest", help="walidacja krocząca i porównanie z PSE")
     p_bt.add_argument("--no-save", action="store_true", help="bez zapisu prognoz do bazy")
+    p_fc = sub.add_parser("forecast", help="prognoza netto na jutro (FR-10)")
+    p_fc.add_argument("--no-update", action="store_true", help="bez pobierania nowych danych")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
     engine = db.make_engine(load_settings().database_url)
+    if args.cmd == "forecast":
+        from p2 import forecast
+
+        res = forecast.run(engine, update=not args.no_update, model_path=MODEL_PATH)
+        table = res.table.assign(
+            godzina=res.table["hour_utc"].dt.tz_convert(features.TZ).dt.strftime("%H:%M")
+        )[["godzina", "lightgbm", "net_demand_pse"]].round(0)
+        print(f"Prognoza z {res.forecast_date} na {res.target_date} (przebieg {res.run_id})")
+        print(table.to_string(index=False))
+        for w in res.warnings:
+            print("UWAGA:", w)
+        return
     db.init_schema(engine)
     actual, weather, pse = backtest.load_inputs(engine)
     res = backtest.run_backtest(actual, weather, pse)

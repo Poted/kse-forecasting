@@ -21,6 +21,7 @@ dependencies = [
 [project.scripts]
 kse-data = "common.cli:main"
 kse-p2 = "p2.cli:main"
+kse-app = "app.run:main"
 
 [dependency-groups]
 dev = [
