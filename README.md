@@ -44,6 +44,12 @@ uv run kse-data db-check   # zgodność liczby wierszy parquet vs baza
 ```
 Schemat i widoki godzinowe: `docs/etapy/P2.3.md`, ERD: `docs/erd.md`.
 
+### Modele (P2)
+```bash
+uv run kse-p2 backtest     # walidacja krocząca, metryki, prognozy historyczne do bazy
+```
+Szczegóły: `docs/etapy/P2.5.md`.
+
 ### Testy i lint
 ```bash
 uv run pytest

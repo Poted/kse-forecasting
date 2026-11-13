@@ -7,6 +7,18 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-13 · P2.5 Modele — zrobione
+**Zrobione:** cechy z kontrolą dostępności (`p2/features.py`), modele bazowe `naive_d1`, `naive_week`, LightGBM, walidacja krocząca z miesięcznym douczaniem (`p2/backtest.py`), CLI `uv run kse-p2 backtest`, tabele `model_run` i `p2_forecast`, widok `v_p2_forecast_latest`, test braku przecieku. Dokumentacja: `docs/etapy/P2.5.md`, metryki: `docs/fig/p2_5_metryki.md`.
+
+**Decyzja w sesji (13.11, zapisana w `00_fundament.md` sekcja 5):** pogoda `_previous_day2` zamiast `_previous_day1` — wg dokumentacji Open-Meteo `_previous_day1` to wartość prognozowana 24 h przed godziną docelową, czyli dla godzin D+1 po ok. 12:00 wydana po momencie prognozy. Pogoda pobrana ponownie od 13.06.2024. Uwaga: `01_dane.md` (sekcja Pogoda) nadal wskazuje `_previous_day1` — do aktualizacji przez użytkownika/rozmowę w projekcie.
+
+**Wyniki** (18 649 godzin, doby 27.09.2024–12.11.2026, wspólny zbiór): MAE [MW] — `naive_d1` 2 269, `naive_week` 1 555, **LightGBM 797** (MAPE 5,87%), PSE 531 (MAPE 4,14%). LightGBM 2025: 793, 2026: 721. PSE lepszy w 25 z 27 miesięcy (LightGBM lepszy w V i VI 2026). Cecha `pv_est` (szacunek PV z ostatnich 7 dób) obniżyła MAE z 819 do 797 i bias 2026 z +226 do +91 MW. Historyczne prognozy w bazie (przebiegi 7–9). `pytest` 50 passed, `ruff` bez błędów.
+
+**Problemy:** `open-meteo.com` poza listą dozwolonych hostów — dokumentację przeczytano ze źródeł strony w publicznym repozytorium `open-meteo/open-meteo-website` (stan z 10.11.2026).
+
+**Pytania do kierownika (nieblokujące):**
+- `01_dane.md`: zaktualizować opis pogody (`_previous_day2`, konwencja czasu `shortwave_radiation`)? Claude Code nie zmienia tego pliku.
+
 ## 2026-11-13 · P2.4 Analiza — zrobione
 **Zrobione:** `p2/analysis.py`, `p2/metrics.py`, `p2/plots.py`; notebook `p2/notebooks/P2.4_analiza.ipynb`; 7 wykresów i tabele w `docs/fig/`. Dokumentacja: `docs/etapy/P2.4.md`. Nowe zależności: `matplotlib`; dev: `ipykernel`, `nbconvert`, `nbformat`.
 
