@@ -12,7 +12,7 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 **Wyniki:** dane odświeżone do 13.11 i załadowane; zgodność liczby wierszy parquet = baza dla 5 tabel (84 772 / 84 772 / 74 692 / 84 772 / 169 536). Średnie godzinowe netto z widoku zgodne z tabelą w `00_fundament.md`. `pytest` 33 passed (testy bazy na tymczasowym schemacie), `ruff` bez błędów.
 
-**Problemy:** demon Dockera w nowym kontenerze sesji ponownie uruchamiany ręcznie (`dockerd`).
+**Problemy:** demon Dockera w nowym kontenerze sesji ponownie uruchamiany ręcznie (`dockerd`). PR do `main`: https://github.com/Poted/kse-forecasting/pull/2 — otwarty; scalenie z sesji zablokowane przez uprawnienia Claude Code (jak PR #1), scala użytkownik.
 
 **Uwagi do P2.5 (nieblokujące, szczegóły w `docs/etapy/P2.3.md`):** konwencja znacznika czasu zmiennych Open-Meteo (chwilowe vs uśrednione za godzinę) do sprawdzenia przed dopasowaniem pogody do godzin.
 
