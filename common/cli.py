@@ -4,6 +4,8 @@ Przykłady:
     uv run kse-data pse --start 2024-06-14
     uv run kse-data weather --start 2024-06-14
     uv run kse-data report
+    uv run kse-data db-init && uv run kse-data load && uv run kse-data db-check
+    uv run kse-data erd --out docs/erd.md
 """
 
 from __future__ import annotations
@@ -15,7 +17,8 @@ from pathlib import Path
 
 import httpx
 
-from common import completeness, openmeteo, pse, storage
+from common import completeness, db, openmeteo, pse, storage
+from common.config import load_settings
 
 log = logging.getLogger("kse-data")
 
@@ -82,6 +85,11 @@ def main(argv: list[str] | None = None) -> None:
     p_w = sub.add_parser("weather", help="pobierz pogodę Open-Meteo (_previous_day1)")
     p_r = sub.add_parser("report", help="raport kompletności (Markdown)")
     p_r.add_argument("--out", type=Path, help="plik wynikowy (domyślnie stdout)")
+    sub.add_parser("db-init", help="utwórz tabele i widoki w bazie")
+    sub.add_parser("load", help="załaduj data/raw do bazy (upsert)")
+    sub.add_parser("db-check", help="zgodność liczby wierszy parquet vs baza")
+    p_erd = sub.add_parser("erd", help="diagram ERD (Mermaid) ze schematu")
+    p_erd.add_argument("--out", type=Path, help="plik wynikowy (domyślnie stdout)")
     for p in (p_pse, p_w, p_r):
         if p is not p_r:
             p.add_argument(
@@ -99,13 +107,47 @@ def main(argv: list[str] | None = None) -> None:
         download_pse(args.data_dir, args.report or list(pse.REPORTS), args.start, args.end)
     elif args.cmd == "weather":
         download_weather(args.data_dir, args.start, args.end)
+    elif args.cmd == "report":
+        _write(build_report(args.data_dir, args.end), args.out)
+    elif args.cmd == "erd":
+        _write(erd_document(), args.out)
     else:
-        text = build_report(args.data_dir, args.end)
-        if args.out:
-            args.out.parent.mkdir(parents=True, exist_ok=True)
-            args.out.write_text(text, encoding="utf-8")
+        engine = db.make_engine(load_settings().database_url)
+        if args.cmd == "db-init":
+            db.init_schema(engine)
+            log.info("Schemat gotowy: %s", ", ".join([*db.metadata.tables, *db.VIEWS]))
+        elif args.cmd == "load":
+            db.init_schema(engine)
+            for r in db.load_all(engine, args.data_dir):
+                log.info("%s: %d plików, %d wierszy (upsert)", r.table, r.files, r.rows)
         else:
-            print(text)
+            checks = db.check_counts(engine, args.data_dir)
+            for c in checks:
+                status = "OK" if c.ok else "NIEZGODNE"
+                print(f"{c.table:20s} parquet={c.parquet_rows:7d} baza={c.db_rows:7d} {status}")
+            if not all(c.ok for c in checks):
+                raise SystemExit(1)
+
+
+def _write(text: str, out: Path | None) -> None:
+    if out:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="utf-8")
+    else:
+        print(text)
+
+
+def erd_document() -> str:
+    return (
+        "# ERD — baza danych\n\n"
+        "Wygenerowano ze schematu (`common/db.py`): `uv run kse-data erd --out docs/erd.md`.\n"
+        "Tabele `pse_*` nie mają kluczy obcych: łączy je czas"
+        " (`dtime_utc`, koniec kwadransu UTC).\n"
+        "Widoki godzinowe: "
+        + ", ".join(f"`{v}`" for v in db.VIEWS)
+        + " (opis: `docs/etapy/P2.3.md`).\n\n"
+        "```mermaid\n" + db.erd_mermaid() + "\n```\n"
+    )
 
 
 if __name__ == "__main__":
