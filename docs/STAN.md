@@ -7,6 +7,15 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-13 · P2.3 Baza — zrobione
+**Zrobione:** schemat PostgreSQL (`common/db.py`): 4 tabele kwadransowe PSE (klucz `dtime_utc`), `weather_point` + `weather_forecast`; ładowanie parquet z upsertem; widoki godzinowe `v_wykonanie_h` (z `net_demand`), `v_plan_h` (benchmark `net_demand_pse`), `v_rce_h`, `v_pogoda_h` (średnia z punktów); polecenia `kse-data load | db-check | erd`; ERD `docs/erd.md`. Dokumentacja: `docs/etapy/P2.3.md`. Do `docs/etapy/P2.2.md` dodana sekcja „Jak sprawdzić samodzielnie”.
+
+**Wyniki:** dane odświeżone do 13.11 i załadowane; zgodność liczby wierszy parquet = baza dla 5 tabel (84 772 / 84 772 / 74 692 / 84 772 / 169 536). Średnie godzinowe netto z widoku zgodne z tabelą w `00_fundament.md`. `pytest` 33 passed (testy bazy na tymczasowym schemacie), `ruff` bez błędów.
+
+**Problemy:** demon Dockera w nowym kontenerze sesji ponownie uruchamiany ręcznie (`dockerd`).
+
+**Uwagi do P2.5 (nieblokujące, szczegóły w `docs/etapy/P2.3.md`):** konwencja znacznika czasu zmiennych Open-Meteo (chwilowe vs uśrednione za godzinę) do sprawdzenia przed dopasowaniem pogody do godzin.
+
 ## 2026-11-13 · przegląd (rozmowa w projekcie)
 - PR #1 (P2.2) scalony do `main` 8.11; testy 26 passed, ruff bez błędów.
 - Odpowiedź na pytanie o wykonanie z dnia D: obowiązuje obecne ustalenie — w P2.5 cechy z wykonania tylko do końca D−1. Powód: opóźnienie publikacji danych śróddziennych (ok. 40 min, jeden pomiar 8.11) nie jest sprawdzalne historycznie (API trzyma ostatni `publication_ts`). Wykonanie z dnia D — możliwy eksperyment później, nie w P2.5.
