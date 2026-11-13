@@ -14,7 +14,7 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 **Wyniki** (18 649 godzin, doby 27.09.2024–12.11.2026, wspólny zbiór): MAE [MW] — `naive_d1` 2 269, `naive_week` 1 555, **LightGBM 797** (MAPE 5,87%), PSE 531 (MAPE 4,14%). LightGBM 2025: 793, 2026: 721. PSE lepszy w 25 z 27 miesięcy (LightGBM lepszy w V i VI 2026). Cecha `pv_est` (szacunek PV z ostatnich 7 dób) obniżyła MAE z 819 do 797 i bias 2026 z +226 do +91 MW. Historyczne prognozy w bazie (przebiegi 7–9). `pytest` 50 passed, `ruff` bez błędów.
 
-**Problemy:** `open-meteo.com` poza listą dozwolonych hostów — dokumentację przeczytano ze źródeł strony w publicznym repozytorium `open-meteo/open-meteo-website` (stan z 10.11.2026).
+**Problemy:** PR do `main`: https://github.com/Poted/kse-forecasting/pull/3 — otwarty (scalenie z sesji zablokowane uprawnieniami, jak PR #1). `open-meteo.com` poza listą dozwolonych hostów — dokumentację przeczytano ze źródeł strony w publicznym repozytorium `open-meteo/open-meteo-website` (stan z 10.11.2026).
 
 **Pytania do kierownika (nieblokujące):**
 - `01_dane.md`: zaktualizować opis pogody (`_previous_day2`, konwencja czasu `shortwave_radiation`)? Claude Code nie zmienia tego pliku.
