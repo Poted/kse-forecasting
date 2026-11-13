@@ -82,7 +82,7 @@ def main(argv: list[str] | None = None) -> None:
 
     p_pse = sub.add_parser("pse", help="pobierz raporty PSE")
     p_pse.add_argument("--report", choices=list(pse.REPORTS), action="append")
-    p_w = sub.add_parser("weather", help="pobierz pogodę Open-Meteo (_previous_day1)")
+    p_w = sub.add_parser("weather", help="pobierz pogodę Open-Meteo (_previous_day2)")
     p_r = sub.add_parser("report", help="raport kompletności (Markdown)")
     p_r.add_argument("--out", type=Path, help="plik wynikowy (domyślnie stdout)")
     sub.add_parser("db-init", help="utwórz tabele i widoki w bazie")

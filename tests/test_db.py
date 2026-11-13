@@ -31,7 +31,7 @@ def his_wlk_cal_frame() -> pd.DataFrame:
 
 def weather_frame() -> pd.DataFrame:
     points = [p for p in openmeteo.load_points() if p.name in ("Warszawa", "Kraków")]
-    return openmeteo.to_frame(fixture_json("openmeteo_2pkt_2025-06-21.json"), points)
+    return openmeteo.to_frame(fixture_json("openmeteo_day2_2pkt_2025-06-21.json"), points)
 
 
 # --- bez bazy ---------------------------------------------------------------

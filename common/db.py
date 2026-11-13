@@ -91,7 +91,7 @@ weather_forecast = sa.Table(
     ),
     _ts("time_utc", primary_key=True, comment="znacznik godziny z Open-Meteo, UTC"),
     *[sa.Column(v, sa.Float) for v in openmeteo.VARIABLES],
-    comment="Prognoza pogody wydana dobę wcześniej (Open-Meteo, zmienne _previous_day1)",
+    comment="Prognoza pogody wydana 48 h przed godziną docelową (Open-Meteo, zmienne _previous_day2)",
 )
 
 PSE_TABLES: dict[str, sa.Table] = {
