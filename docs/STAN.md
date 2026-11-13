@@ -7,6 +7,17 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-13 · P2.6 Aplikacja — zrobione
+**Zrobione:** prognoza na jutro `uv run kse-p2 forecast` (`p2/forecast.py`: odświeżenie danych, trening do D−1, prognoza D+1, zapis jako `lightgbm_operacyjny`); dashboard Streamlit `uv run kse-app` z 3 widokami (prognoza na jutro z przyciskiem przeliczenia, jakość prognoz, analiza) i panelem źródeł/licencji; `Dockerfile` + usługa `app` w `docker-compose.yml`. Dokumentacja: `docs/etapy/P2.6.md`, zrzuty: `docs/fig/p2_6_widok_*.png`.
+
+**Wyniki:** prognoza na 14.11 policzona z aktualnych danych (39 s). `docker compose up -d` uruchamia bazę i dashboard (sprawdzone: oba kontenery działają, widoki renderują się). `pytest` 55 passed (w tym start dashboardu przez AppTest), `ruff` bez błędów.
+
+**Problemy:** sieć sesji blokuje `deb.debian.org` — krok `apt-get install libgomp1` z `Dockerfile` nie mógł być wykonany w tym środowisku; obraz zweryfikowano wariantem testowym z `libgomp` skopiowanym z hosta (szczegóły w `docs/etapy/P2.6.md`). PR #3 (P2.5) nadal otwarty — P2.6 na tej samej gałęzi, PR #3 zaktualizowany.
+
+**Pytania do kierownika (nieblokujące):**
+- Warunki korzystania z danych API PSE (licencja) — niesprawdzone; aplikacja podaje źródło. Czy jest znany dokument PSE do zacytowania w aplikacji i dokumentacji?
+- Następny etap P2.7 kończy się tagiem `p2-v1.0` — wymaga akceptacji użytkownika (zgodnie z `CLAUDE.md`).
+
 ## 2026-11-13 · P2.5 Modele — zrobione
 **Zrobione:** cechy z kontrolą dostępności (`p2/features.py`), modele bazowe `naive_d1`, `naive_week`, LightGBM, walidacja krocząca z miesięcznym douczaniem (`p2/backtest.py`), CLI `uv run kse-p2 backtest`, tabele `model_run` i `p2_forecast`, widok `v_p2_forecast_latest`, test braku przecieku. Dokumentacja: `docs/etapy/P2.5.md`, metryki: `docs/fig/p2_5_metryki.md`.
 

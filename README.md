@@ -17,11 +17,12 @@ uv sync
 
 ### Baza danych
 1. Ustawienia: `cp .env.example .env` i zmień hasło (`POSTGRES_PASSWORD` oraz to samo w `DATABASE_URL`).
-2. Start PostgreSQL 16 (dane w wolumenie `pgdata`):
+2. Start bazy PostgreSQL 16 (dane w wolumenie `pgdata`) i dashboardu (http://localhost:8501):
    ```bash
    docker compose up -d
    ```
-   Zatrzymanie: `docker compose down` (dane zostają; `docker compose down -v` usuwa wolumen).
+   Tylko baza: `docker compose up -d db`. Zatrzymanie: `docker compose down` (dane zostają;
+   `docker compose down -v` usuwa wolumen).
 
 **Bez Dockera:** zainstaluj PostgreSQL 16 lokalnie, utwórz użytkownika i bazę zgodnie z `.env`
 (np. `createuser -P kse` i `createdb -O kse kse`) i ustaw `DATABASE_URL`
@@ -49,6 +50,13 @@ Schemat i widoki godzinowe: `docs/etapy/P2.3.md`, ERD: `docs/erd.md`.
 uv run kse-p2 backtest     # walidacja krocząca, metryki, prognozy historyczne do bazy
 ```
 Szczegóły: `docs/etapy/P2.5.md`.
+
+### Prognoza na jutro i dashboard (P2)
+```bash
+uv run kse-p2 forecast     # pobranie najnowszych danych, trening, prognoza netto na jutro
+uv run kse-app             # dashboard Streamlit: http://localhost:8501
+```
+Szczegóły: `docs/etapy/P2.6.md`.
 
 ### Testy i lint
 ```bash
