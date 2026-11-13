@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.engine import Connection, Engine
 
@@ -94,6 +95,35 @@ weather_forecast = sa.Table(
     comment="Prognoza pogody wydana 48 h przed godziną docelową (Open-Meteo, _previous_day2)",
 )
 
+model_run = sa.Table(
+    "model_run",
+    metadata,
+    sa.Column("run_id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("model", sa.Text, nullable=False, index=True),
+    _ts("created_at", nullable=False, server_default=sa.func.now()),
+    sa.Column("code_version", sa.Text, comment="git commit kodu"),
+    sa.Column("params", JSONB, comment="parametry modelu i cechy"),
+    sa.Column("train_info", JSONB, comment="okna treningowe walidacji kroczącej"),
+    sa.Column("metrics", JSONB, comment="metryki na okresie testowym"),
+    comment="Rejestr przebiegów modeli (FR-06)",
+)
+p2_forecast = sa.Table(
+    "p2_forecast",
+    metadata,
+    sa.Column(
+        "run_id",
+        sa.Integer,
+        sa.ForeignKey("model_run.run_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    _ts("hour_utc", primary_key=True, comment="początek godziny docelowej, UTC"),
+    sa.Column("target_date", sa.Date, nullable=False, index=True, comment="doba docelowa D+1"),
+    sa.Column("forecast_date", sa.Date, nullable=False, comment="doba D wykonania prognozy"),
+    _ts("forecast_moment_utc", nullable=False, comment="D 12:00 czasu lokalnego, UTC"),
+    sa.Column("net_demand_hat", sa.Float, nullable=False, comment="prognoza netto [MW]"),
+    comment="Prognozy zapotrzebowania netto P2 na D+1 (historyczne z walidacji kroczącej, FR-09)",
+)
+
 PSE_TABLES: dict[str, sa.Table] = {
     "his-wlk-cal": his_wlk_cal,
     "pdgopkd": pdgopkd,
@@ -144,6 +174,12 @@ VIEWS: dict[str, str] = {
                count(*) AS n_points
         FROM weather_forecast
         GROUP BY time_utc""",
+    "v_p2_forecast_latest": """
+        SELECT r.model, f.hour_utc, f.target_date, f.forecast_date, f.forecast_moment_utc,
+               f.net_demand_hat, f.run_id
+        FROM p2_forecast f
+        JOIN model_run r USING (run_id)
+        WHERE f.run_id = (SELECT max(r2.run_id) FROM model_run r2 WHERE r2.model = r.model)""",
 }
 
 VIEW_COMMENTS = {
@@ -151,6 +187,7 @@ VIEW_COMMENTS = {
     "v_plan_h": "Plan PSE godzinowo; net_demand_pse = benchmark P2",
     "v_rce_h": "RCE godzinowo (średnia i minimum z kwadransów)",
     "v_pogoda_h": "Pogoda: średnia z punktów (decyzja 08.11), znacznik godziny jak w Open-Meteo",
+    "v_p2_forecast_latest": "Prognozy P2 z ostatniego przebiegu każdego modelu",
 }
 
 
