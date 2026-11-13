@@ -7,6 +7,13 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-13 · przegląd (rozmowa w projekcie)
+- PR #1 (P2.2) scalony do `main` 8.11; testy 26 passed, ruff bez błędów.
+- Odpowiedź na pytanie o wykonanie z dnia D: obowiązuje obecne ustalenie — w P2.5 cechy z wykonania tylko do końca D−1. Powód: opóźnienie publikacji danych śróddziennych (ok. 40 min, jeden pomiar 8.11) nie jest sprawdzalne historycznie (API trzyma ostatni `publication_ts`). Wykonanie z dnia D — możliwy eksperyment później, nie w P2.5.
+- `CLAUDE.md`: dokumentacja etapu ma sekcję „Jak sprawdzić samodzielnie”.
+- Ciągłość pracy nie wymaga scalania PR: nowa sesja zaczyna od gałęzi niescalonego PR (sekcja „Gałęzie”). Scalenie do `main` — najpóźniej przed tagiem `p2-v1.0`.
+- Następne: P2.3.
+
 ## 2026-11-08 · P2.2 Dane — zrobione
 **Zrobione:** klienci PSE (4 raporty, paginacja `nextLink`, ponawianie) i Open-Meteo (`_previous_day1`, 8 punktów); zapis parquet w plikach miesięcznych z zastępowaniem dób; CLI `uv run kse-data pse|weather|report`; raport kompletności; testy na zapisanych odpowiedziach API. Dokumentacja: `docs/etapy/P2.2.md`.
 

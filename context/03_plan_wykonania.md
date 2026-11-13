@@ -61,8 +61,6 @@ Komunikacja: `04_komunikacja.md`.
 Inż uczy się na danych o ograniczeniach od 27.09.2024. Wybrany wariant: P2 generuje historyczne prognozy od 27.09.2024, model uczony na dostępnej historii od 14.06.2024 (walidacja krocząca, model douczany na rosnącym oknie). Odrzucone: starsze dane z raportów historycznych PSE (inny format, niesprawdzone); prognoza PSE zamiast P2.
 
 ## Stan
-| Etap | Status |
-|---|---|
 | Etap | Status | Wymaga decyzji |
 |---|---|---|
 | P2.1 | zrobione (8.11.2026) | — |

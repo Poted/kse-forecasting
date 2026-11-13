@@ -15,7 +15,7 @@ Na początku każdej sesji:
 3. Jeśli nie ma pliku `context/zadania/<etap>.md` — utwórz go na podstawie `03_plan_wykonania.md` (format jak `P2.1.md`: zakres, „Gotowe, gdy”, decyzje, z których korzysta).
 4. Decyzje: jeśli etap wymaga rozstrzygnięcia pytania otwartego (`00_fundament.md` sekcja 6, `03_plan_wykonania.md`), a decyzji nie ma w `00_fundament.md` sekcja 5 — dopisz pytanie w `docs/STAN.md` (sekcja „Decyzje potrzebne”), napisz to użytkownikowi i zatrzymaj się. Jeśli użytkownik rozstrzygnie je w sesji — dopisz decyzję z datą do `00_fundament.md` sekcja 5.
 5. Wykonaj etap. Duże etapy dziel na kroki; commit po każdym kroku.
-6. Dokumentuj etap w `docs/etapy/<etap>.md`: co powstało, jak działa, decyzje techniczne i ich powody, jak uruchomić, wyniki (liczby, wykresy). Pisz tak, żeby użytkownik mógł to zrozumieć i wykorzystać w dokumentacji P2 i w pracy inżynierskiej.
+6. Dokumentuj etap w `docs/etapy/<etap>.md`: co powstało, jak działa, decyzje techniczne i ich powody, jak uruchomić, wyniki (liczby, wykresy). Pisz tak, żeby użytkownik mógł to zrozumieć i wykorzystać w dokumentacji P2 i w pracy inżynierskiej. Obowiązkowa sekcja „Jak sprawdzić samodzielnie”: 2–5 poleceń do uruchomienia po `uv sync` i `docker compose up -d` oraz oczekiwany wynik każdego z nich.
 7. Sprawdź „Gotowe, gdy”. Jeśli nie da się go spełnić — opisz dlaczego w `docs/STAN.md` i zatrzymaj się.
 8. Wpis w `docs/STAN.md` (na górze: data, etap, co zrobione, wyniki, problemy, pytania). Status `zrobione` w pliku zadania i w tabeli „Stan”. Commit + push, PR do `main` (sekcja „Gałęzie”).
 9. Przejdź do następnego etapu (krok 2), chyba że użytkownik poprosił tylko o jeden etap.
