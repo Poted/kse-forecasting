@@ -333,7 +333,9 @@ def erd_mermaid() -> str:
         sa.DateTime: "timestamptz",
         sa.Date: "date",
         sa.Float: "float8",
-        sa.SmallInteger: "int2",
+        sa.SmallInteger: "int2",  # przed Integer (podklasa)
+        sa.Integer: "int4",
+        JSONB: "jsonb",
         sa.Text: "text",
     }
     lines = ["erDiagram"]

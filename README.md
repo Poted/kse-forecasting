@@ -4,7 +4,7 @@ Prognozowanie w Krajowym Systemie Elektroenergetycznym na podstawie danych PSE:
 - **P2:** prognoza zapotrzebowania netto (zapotrzebowanie − generacja PV) na dobę naprzód,
 - **Praca inżynierska:** prognoza ryzyka nadpodaży energii z PV (ograniczenia generacji PV przez PSE, ujemne ceny RCE).
 
-Kontekst projektu: `context/`. Stan prac: `docs/STAN.md`.
+Kontekst projektu: `context/`. Stan prac: `docs/STAN.md`. **Dokumentacja P2: `docs/P2/`.**
 
 ## Uruchomienie
 

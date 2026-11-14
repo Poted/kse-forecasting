@@ -43,6 +43,9 @@ def test_erd_contains_tables_and_relation():
         assert f"    {name} {{" in text
     assert 'weather_point ||--o{ weather_forecast : "point_id"' in text
     assert "timestamptz dtime_utc PK" in text
+    assert 'model_run ||--o{ p2_forecast : "run_id"' in text
+    assert "int4 run_id PK" in text and "jsonb params" in text
+    assert "INTEGER" not in text and "JSONB" not in text  # typy PostgreSQL, nie SQLAlchemy
 
 
 def test_prepare_pse_converts_date_and_dedups():

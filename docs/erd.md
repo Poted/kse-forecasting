@@ -7,13 +7,13 @@ Widoki godzinowe: `v_wykonanie_h`, `v_plan_h`, `v_rce_h`, `v_pogoda_h`, `v_p2_fo
 ```mermaid
 erDiagram
     model_run {
-        INTEGER run_id PK
+        int4 run_id PK
         text model
         timestamptz created_at
         text code_version
-        JSONB params
-        JSONB train_info
-        JSONB metrics
+        jsonb params
+        jsonb train_info
+        jsonb metrics
     }
     pse_his_wlk_cal {
         timestamptz dtime_utc PK
@@ -66,7 +66,7 @@ erDiagram
         float8 lon
     }
     p2_forecast {
-        INTEGER run_id PK,FK
+        int4 run_id PK,FK
         timestamptz hour_utc PK
         date target_date
         date forecast_date

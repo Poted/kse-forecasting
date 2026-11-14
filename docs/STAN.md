@@ -3,9 +3,20 @@
 Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ## Decyzje potrzebne
-- (brak blokujących)
+- **Tag `p2-v1.0`** (koniec P2): wymaga akceptacji użytkownika (`CLAUDE.md`) i scalenia PR #3 do `main`. Proponowana kolejność: przegląd i testy użytkownika → scalenie PR #3 → tag na `main`.
 
 ---
+
+## 2026-11-14 · P2.7 Dokumentacja — dokumentacja gotowa, tag czeka na akceptację
+**Zrobione:** `docs/P2/`: `README.md` (opis i skrót), `01_technologie.md` (wersje z `uv.lock`, uzasadnienie), `02_architektura.md` (diagramy komponentów, przepływu danych, momentu prognozy, wdrożenia), `03_model_danych.md` (ERD generowany ze schematu, tabele, widoki), `04_wyniki.md`, `05_instrukcja.md`, `06_testy.md`. Generator ERD: poprawione nazwy typów (`int4`, `jsonb` zamiast `INTEGER`, `JSONB`) + test.
+
+**Środowisko (14.11, za zgodą użytkownika):** dopuszczone `deb.debian.org` i `open-meteo.com`. Obraz Docker zbudowany z `Dockerfile` bez obejść (instalacja `libgomp1` z Debiana), `docker compose up -d` sprawdzone.
+
+**Wyniki:** 4 diagramy Mermaid w `docs/P2/` sprawdzone parserem i rendererem Mermaid 11.4.1. `pytest` 55 passed, `ruff` bez błędów.
+
+**Problemy:** brak. PR #3 (P2.5–P2.7) otwarty.
+
+**Pytania do kierownika (nieblokujące):** jak wcześniej — licencja danych PSE; aktualizacja opisu pogody w `01_dane.md` (`_previous_day2`).
 
 ## 2026-11-13 · P2.6 Aplikacja — zrobione
 **Zrobione:** prognoza na jutro `uv run kse-p2 forecast` (`p2/forecast.py`: odświeżenie danych, trening do D−1, prognoza D+1, zapis jako `lightgbm_operacyjny`); dashboard Streamlit `uv run kse-app` z 3 widokami (prognoza na jutro z przyciskiem przeliczenia, jakość prognoz, analiza) i panelem źródeł/licencji; `Dockerfile` + usługa `app` w `docker-compose.yml`. Dokumentacja: `docs/etapy/P2.6.md`, zrzuty: `docs/fig/p2_6_widok_*.png`.
