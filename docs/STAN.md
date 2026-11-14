@@ -12,7 +12,7 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 **Wyniki:** prognoza na 14.11 policzona z aktualnych danych (39 s). `docker compose up -d` uruchamia bazę i dashboard (sprawdzone: oba kontenery działają, widoki renderują się). `pytest` 55 passed (w tym start dashboardu przez AppTest), `ruff` bez błędów.
 
-**Problemy:** sieć sesji blokuje `deb.debian.org` — krok `apt-get install libgomp1` z `Dockerfile` nie mógł być wykonany w tym środowisku; obraz zweryfikowano wariantem testowym z `libgomp` skopiowanym z hosta (szczegóły w `docs/etapy/P2.6.md`). PR #3 (P2.5) nadal otwarty — P2.6 na tej samej gałęzi, PR #3 zaktualizowany.
+**Problemy:** 13.11 sieć sesji blokowała `deb.debian.org` (krok `apt-get install libgomp1`); 14.11 użytkownik dopuścił `deb.debian.org` i `open-meteo.com` — obraz zbudowany z `Dockerfile` bez obejść, `docker compose up -d` sprawdzone. PR #3 (P2.5) nadal otwarty — P2.6 na tej samej gałęzi, PR #3 zaktualizowany.
 
 **Pytania do kierownika (nieblokujące):**
 - Warunki korzystania z danych API PSE (licencja) — niesprawdzone; aplikacja podaje źródło. Czy jest znany dokument PSE do zacytowania w aplikacji i dokumentacji?
