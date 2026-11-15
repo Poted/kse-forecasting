@@ -167,3 +167,74 @@ def latest_operational(engine: Engine) -> pd.DataFrame:
     for col in ("net_demand_hat", "net_demand_pse", "net_demand"):
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)  # NULL → NaN
     return df
+
+
+OPERATIONAL_EVAL_SQL = "SELECT * FROM v_p2_operational_eval ORDER BY hour_utc"
+
+
+def operational_eval(engine: Engine) -> pd.DataFrame:
+    """Prognozy operacyjne (ostatnie przeliczenie z dnia D na dobę D+1) z wykonaniem i PSE."""
+    with engine.connect() as conn:
+        df = pd.read_sql(sa.text(OPERATIONAL_EVAL_SQL), conn)
+    if not df.empty:
+        df["hour_utc"] = pd.to_datetime(df["hour_utc"], utc=True)
+    for col in ("net_demand_hat", "net_demand", "net_demand_pse"):
+        df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
+    return df
+
+
+def daily_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """Błąd dzienny prognoz operacyjnych: tylko doby z pełnym wykonaniem.
+
+    Kolumny: target_date, code_version, hours, MAE_lightgbm, MAE_pse, bias_lightgbm.
+    """
+    if df.empty:
+        return pd.DataFrame(
+            columns=[
+                "target_date",
+                "code_version",
+                "hours",
+                "MAE_lightgbm",
+                "MAE_pse",
+                "bias_lightgbm",
+            ]
+        )
+    rows = []
+    for day, g in df.groupby("target_date"):
+        if g["net_demand"].isna().any():  # doba jeszcze niekompletna
+            continue
+        err = g["net_demand_hat"] - g["net_demand"]
+        pse = (g["net_demand_pse"] - g["net_demand"]).abs()
+        rows.append(
+            {
+                "target_date": day,
+                "code_version": g["code_version"].iloc[0],
+                "hours": len(g),
+                "MAE_lightgbm": float(err.abs().mean()),
+                "MAE_pse": float(pse.mean()) if pse.notna().all() else float("nan"),
+                "bias_lightgbm": float(err.mean()),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def version_summary(daily: pd.DataFrame) -> pd.DataFrame:
+    """Średnie błędy wg wersji kodu (kolejność wg pierwszej doby) — postęp narzędzia."""
+    if daily.empty:
+        return pd.DataFrame(
+            columns=["code_version", "first_day", "days", "MAE_lightgbm", "MAE_pse"]
+        )
+    g = daily.groupby("code_version", dropna=False)
+    out = (
+        pd.DataFrame(
+            {
+                "first_day": g["target_date"].min(),
+                "days": g.size(),
+                "MAE_lightgbm": g["MAE_lightgbm"].mean(),
+                "MAE_pse": g["MAE_pse"].mean(),
+            }
+        )
+        .reset_index()
+        .sort_values("first_day")
+    )
+    return out.reset_index(drop=True)

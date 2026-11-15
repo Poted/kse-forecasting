@@ -139,6 +139,7 @@ Wyniki sprawdzenia danych (1.11.2026): ograniczenia PV w 444 z 765 dni, 12 480 k
 | 08.11 | Prognoza na jutro (P2.6): uruchamiana ręcznie — przycisk w dashboardzie i polecenie CLI; bez harmonogramu |
 | 13.11 | Pogoda w P2 (P2.5): zmienne Open-Meteo `_previous_day2` (prognoza wydana 48 h przed godziną docelową) zamiast `_previous_day1`. Powód: wg dokumentacji Open-Meteo `_previous_day1` to wartość prognozowana 24 h przed godziną docelową — dla godzin D+1 po ok. 12:00 wydana po momencie prognozy (przeciek). `_previous_day2` jest dostępna o 12:00 dnia D dla wszystkich godzin D+1 |
 | 15.11 | Środowisko testów: laptop z Windows (Docker Desktop); dashboard do przeglądania z telefonu na Streamlit Community Cloud z bazą Neon (PostgreSQL w chmurze); praca nad kodem z telefonu w sesjach Claude Code. Odrzucone: dashboard w sesjach Claude (zużycie tokenów, limit 2 h), Netlify (nie uruchamia aplikacji Streamlit) |
+| 15.11 | Prognoza na jutro uruchamiana także automatycznie: codziennie przez GitHub Actions (ok. 12:00), zapis w bazie Neon; przycisk w dashboardzie i CLI zostają. Porównanie prognoz operacyjnych z wykonaniem i PSE zapisywane w bazie i pokazywane w dashboardzie (zakładka „Historia prognoz”, z podziałem na wersje kodu). Zmienia decyzję z 08.11 (tylko ręcznie) |
 
 ## 6. Pytania otwarte
 - Dokładna data oddania pracy inżynierskiej; zasady uczelni dot. AI; wymagany szablon pracy.
