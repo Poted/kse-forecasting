@@ -112,6 +112,10 @@ def test_dashboard_starts():
         pytest.skip(f"Brak bazy z danymi: {exc}")
     at = AppTest.from_file(str(DASHBOARD), default_timeout=180).run()
     assert not at.exception
+    # moduły projektu (p2/, common/) obserwowane przez Streamlit → przeładowanie po zmianie kodu
+    from streamlit.file_util import file_in_pythonpath
+
+    assert file_in_pythonpath(str(DASHBOARD.parent.parent / "p2" / "forecast.py"))
     assert [t.label for t in at.tabs] == [
         "Prognoza na jutro",
         "Historia prognoz",

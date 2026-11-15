@@ -5,6 +5,7 @@ Uruchomienie: `uv run kse-app` (albo `docker compose up -d` — usługa `app`).
 
 from __future__ import annotations
 
+import os
 import sys
 from datetime import timedelta
 from pathlib import Path
@@ -14,6 +15,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+# Streamlit przeładowuje po zmianie tylko moduły z katalogu skryptu (`app/`) albo z PYTHONPATH.
+# Bez tego po aktualizacji kodu w chmurze `p2/` i `common/` zostawały w pamięci w starej wersji.
+_paths = [x for x in os.environ.get("PYTHONPATH", "").split(os.pathsep) if x]
+if str(ROOT) not in _paths:
+    os.environ["PYTHONPATH"] = os.pathsep.join([str(ROOT), *_paths])
 
 import pandas as pd
 import streamlit as st

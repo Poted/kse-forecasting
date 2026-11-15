@@ -14,7 +14,11 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 **Wyniki:** pierwsza porównana doba (14.11, lokalnie): MAE LightGBM 453 MW, PSE 343 MW. `pytest` 63 passed, `ruff` bez błędów.
 
-**Do zrobienia przez użytkownika:** sekret `DATABASE_URL` w GitHub (Settings → Secrets and variables → Actions); scalenie PR.
+**Do zrobienia przez użytkownika:** sekret `DATABASE_URL` w GitHub (Settings → Secrets and variables → Actions).
+
+**Gałęzie (15.11, zgoda użytkownika):** praca bezpośrednio na `main` (brak produkcji; ewentualny powrót przez revert). Zgodne z `CLAUDE.md` („Jeśli możesz pushować na `main` — pracuj na `main`”).
+
+**Poprawka Streamlit Cloud:** po aktualizacji kodu moduły `p2/`, `common/` zostawały w pamięci w starej wersji (`AttributeError` w zakładce „Historia prognoz”) — Streamlit przeładowuje tylko moduły z katalogu skryptu albo z `PYTHONPATH`; dashboard dopisuje katalog repozytorium do `PYTHONPATH`. Jednorazowo potrzebny restart aplikacji (Manage app → Reboot app).
 
 ## 2026-11-15 · Środowisko pracy (laptop, telefon, chmura)
 **Decyzja użytkownika (15.11, zapisana w `00_fundament.md` sekcja 5):** testy na laptopie z Windows; dashboard do przeglądania z telefonu na Streamlit Community Cloud + Neon; praca nad kodem z telefonu w sesjach Claude Code.
