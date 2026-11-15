@@ -43,13 +43,14 @@ def _layout(fig: go.Figure, title: str, xaxis: str = "", yaxis: str = "MW") -> g
         },
         template="plotly_white",
         hovermode="x unified",
+        dragmode=False,  # bez przybliżania przeciąganiem (na telefonie blokowało przewijanie)
         legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "x": 0},
         margin={"l": 10, "r": 10, "t": 105, "b": 10},
         height=450,
         separators=", ",
     )
-    fig.update_xaxes(title=xaxis, gridcolor=GRID, color=TEXT_2)
-    fig.update_yaxes(title=yaxis, gridcolor=GRID, color=TEXT_2, tickformat=",.0f")
+    fig.update_xaxes(title=xaxis, gridcolor=GRID, color=TEXT_2, fixedrange=True)
+    fig.update_yaxes(title=yaxis, gridcolor=GRID, color=TEXT_2, tickformat=",.0f", fixedrange=True)
     return fig
 
 

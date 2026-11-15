@@ -193,7 +193,9 @@ VIEW_COMMENTS = {
 
 
 def make_engine(url: str) -> Engine:
-    return sa.create_engine(url, future=True)
+    # pool_pre_ping: baza w chmurze (Neon) zamyka połączenia po uśpieniu (scale to zero);
+    # połączenie z puli jest sprawdzane przed użyciem i w razie potrzeby otwierane ponownie.
+    return sa.create_engine(url, future=True, pool_pre_ping=True)
 
 
 def init_schema(engine: Engine, schema: str | None = None) -> None:
