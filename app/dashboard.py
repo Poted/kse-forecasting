@@ -18,8 +18,8 @@ if str(ROOT) not in sys.path:
 import pandas as pd
 import streamlit as st
 
-from app import charts, data
-from common import db
+from app import bootstrap, charts, data
+from common import db, storage
 from common.config import load_settings
 from p2 import analysis, backtest, forecast
 
@@ -31,7 +31,25 @@ PLOT_CONFIG = {"displayModeBar": False}
 
 @st.cache_resource
 def engine():
-    return db.make_engine(load_settings().database_url)
+    eng = db.make_engine(load_settings().database_url)
+    db.init_schema(eng)  # tabele i widoki (nowa baza w chmurze jest pusta)
+    return eng
+
+
+def view_empty_database() -> None:
+    """Pusta baza (np. nowa baza Neon): jednorazowe załadowanie danych z poziomu dashboardu."""
+    st.subheader("Baza danych jest pusta")
+    st.write(
+        "Jednorazowo trzeba pobrać dane PSE i pogodę od 14.06.2024, załadować je do bazy, "
+        "wykonać walidację modeli i prognozę na jutro. Trwa to ok. 10 minut — "
+        "nie zamykaj strony do końca."
+    )
+    if st.button("Załaduj dane", type="primary"):
+        with st.spinner("Pobieranie i ładowanie danych, walidacja modeli…"):
+            summary = bootstrap.run(engine(), storage.DEFAULT_DATA_DIR)
+        st.cache_data.clear()
+        st.success(f"Gotowe: {summary.get('prognoza')} · {summary.get('walidacja')}")
+        st.rerun()
 
 
 @st.cache_data(ttl=600)
@@ -237,6 +255,9 @@ def sources() -> None:
 
 
 sources()
+if bootstrap.db_is_empty(engine()):
+    view_empty_database()
+    st.stop()
 tab1, tab2, tab3 = st.tabs(["Prognoza na jutro", "Jakość prognoz", "Analiza"])
 with tab1:
     view_tomorrow()

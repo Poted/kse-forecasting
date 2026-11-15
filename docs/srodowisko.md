@@ -45,7 +45,7 @@ Po zmianach w kodzie (`git pull`): `docker compose up -d --build`.
    `postgresql://<użytkownik>:<hasło>@<host>.neon.tech/<baza>?sslmode=require`
    Aplikacja przyjmuje go bez zmian (sama dobiera sterownik psycopg 3).
 3. Sprawdź limit miejsca w planie Neon: lokalna baza z danymi i wszystkimi przebiegami modeli zajmuje 132 MB (15.11.2026).
-4. Załaduj dane z laptopa do Neon (kontener aplikacji musi działać — rozdz. 1.2):
+4. Załaduj dane: **najprościej po wdrożeniu (rozdz. 3)** — przy pustej bazie dashboard pokazuje przycisk „Załaduj dane” (jednorazowo, ok. 10 min, nie zamykaj strony). Alternatywnie z laptopa (kontener aplikacji musi działać — rozdz. 1.2):
    ```powershell
    docker compose exec -e DATABASE_URL="<connection string z Neon>" app uv run --no-sync kse-init
    ```
