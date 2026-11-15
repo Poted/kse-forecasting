@@ -77,6 +77,15 @@ Fakty z dokumentacji Streamlit Community Cloud (repozytorium `streamlit/docs`, s
 - **Przelicz prognozę na jutro** — pobiera najnowsze dane z PSE i Open-Meteo, uczy model i zapisuje prognozę w Neon (ok. 1 min).
 - Każde scalenie zmian do `main` aktualizuje aplikację automatycznie.
 
+## 4a. Codzienna prognoza automatyczna (GitHub Actions)
+Plik `.github/workflows/prognoza-dzienna.yml` codziennie o 10:17 UTC (11:17 zimą, 12:17 latem) uruchamia `kse-p2 forecast` na bazie Neon: odświeżenie danych, trening do D−1, zapis prognozy na jutro.
+
+Jednorazowo: GitHub → repozytorium → **Settings → Secrets and variables → Actions → New repository secret**, nazwa `DATABASE_URL`, wartość — ten sam connection string co w Streamlit Cloud. Test: zakładka **Actions → Prognoza na jutro → Run workflow**.
+
+Koszt (dokumentacja GitHub, 13.11.2026): prywatne repozytorium w planie Free ma w cenie $12/mies. na Actions (ok. 2 000 minut runnera Linux); jedno uruchomienie trwa kilka minut. Bez karty płatniczej po wyczerpaniu limitu Actions są blokowane, nie obciążane.
+
+**Porównanie z wykonaniem** odbywa się w bazie: zakładka „Historia prognoz” zestawia każdą prognozę z dnia D z wykonaniem doby D+1 (gdy PSE je opublikuje, ok. 00:00–02:00) i z planem PSE, także według wersji kodu.
+
 ## 5. Praca nad kodem z telefonu (np. na wakacjach)
 1. **Claude Code** (aplikacja Claude, sesja w repozytorium `Poted/kse-forecasting`): „kontynuuj” — realizacja kolejnych etapów według `CLAUDE.md`; zmiany trafiają do PR.
 2. **GitHub** (aplikacja): przegląd PR, dokumentacji (`docs/`, diagramy i wykresy wyświetlają się), scalenie do `main`.

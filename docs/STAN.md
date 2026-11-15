@@ -7,6 +7,15 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-15 · Historia prognoz i prognoza automatyczna
+**Decyzja użytkownika (15.11, `00_fundament.md` sekcja 5):** prognoza na jutro także automatycznie (GitHub Actions, codziennie ok. 12:00); porównanie prognoz z wykonaniem zapisywane i pokazywane w dashboardzie.
+
+**Zrobione:** widok `v_p2_operational_eval` (ostatnia prognoza z dnia D na D+1 vs wykonanie i PSE); `forecast.daily_summary`, `forecast.version_summary`; zakładka dashboardu „Historia prognoz” (dzienny MAE LightGBM i PSE, podsumowanie wg wersji kodu); workflow `.github/workflows/prognoza-dzienna.yml`. Wcześniej (PR #4): `pool_pre_ping` (uśpienie bazy Neon), wykresy bez przybliżania na telefonie.
+
+**Wyniki:** pierwsza porównana doba (14.11, lokalnie): MAE LightGBM 453 MW, PSE 343 MW. `pytest` 63 passed, `ruff` bez błędów.
+
+**Do zrobienia przez użytkownika:** sekret `DATABASE_URL` w GitHub (Settings → Secrets and variables → Actions); scalenie PR.
+
 ## 2026-11-15 · Środowisko pracy (laptop, telefon, chmura)
 **Decyzja użytkownika (15.11, zapisana w `00_fundament.md` sekcja 5):** testy na laptopie z Windows; dashboard do przeglądania z telefonu na Streamlit Community Cloud + Neon; praca nad kodem z telefonu w sesjach Claude Code.
 

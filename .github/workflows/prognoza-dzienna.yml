@@ -1,0 +1,41 @@
+# Codzienna prognoza zapotrzebowania netto na jutro (decyzja 15.11.2026).
+# Odświeża dane PSE i pogodę, uczy model na dobach do D−1, zapisuje prognozę w bazie (Neon).
+# Wymaga sekretu repozytorium DATABASE_URL (Settings → Secrets and variables → Actions).
+name: Prognoza na jutro
+
+on:
+  schedule:
+    - cron: "17 10 * * *" # 10:17 UTC = 11:17 (zima) / 12:17 (lato) czasu polskiego
+  workflow_dispatch: # ręczne uruchomienie z zakładki Actions
+
+concurrency:
+  group: prognoza-dzienna
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalacja zależności (uv.lock)
+        run: |
+          pip install uv==0.11.32
+          uv sync --frozen --no-dev
+      - name: Prognoza na jutro
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Brak sekretu DATABASE_URL w ustawieniach repozytorium." >&2
+            exit 1
+          fi
+          uv run --no-sync kse-p2 forecast

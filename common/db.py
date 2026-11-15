@@ -181,6 +181,21 @@ VIEWS: dict[str, str] = {
         FROM p2_forecast f
         JOIN model_run r USING (run_id)
         WHERE f.run_id = (SELECT max(r2.run_id) FROM model_run r2 WHERE r2.model = r.model)""",
+    "v_p2_operational_eval": """
+        WITH day_run AS (
+            SELECT DISTINCT ON (f.target_date) f.target_date, f.run_id
+            FROM p2_forecast f
+            JOIN model_run r USING (run_id)
+            WHERE r.model = 'lightgbm_operacyjny' AND f.forecast_date = f.target_date - 1
+            ORDER BY f.target_date, f.run_id DESC
+        )
+        SELECT f.target_date, f.hour_utc, f.run_id, r.code_version, r.created_at,
+               f.net_demand_hat, w.net_demand, p.net_demand_pse
+        FROM day_run d
+        JOIN p2_forecast f ON f.target_date = d.target_date AND f.run_id = d.run_id
+        JOIN model_run r ON r.run_id = f.run_id
+        LEFT JOIN v_wykonanie_h w ON w.hour_utc = f.hour_utc AND w.n_quarters = 4
+        LEFT JOIN v_plan_h p ON p.hour_utc = f.hour_utc AND p.n_quarters = 4""",
 }
 
 VIEW_COMMENTS = {
@@ -189,6 +204,7 @@ VIEW_COMMENTS = {
     "v_rce_h": "RCE godzinowo (średnia i minimum z kwadransów)",
     "v_pogoda_h": "Pogoda: średnia z punktów (decyzja 08.11), znacznik godziny jak w Open-Meteo",
     "v_p2_forecast_latest": "Prognozy P2 z ostatniego przebiegu każdego modelu",
+    "v_p2_operational_eval": "Prognozy operacyjne na D+1 (ostatnie z dnia D) vs wykonanie i PSE",
 }
 
 

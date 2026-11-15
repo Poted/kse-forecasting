@@ -67,6 +67,11 @@ def cached_latest() -> pd.DataFrame:
     return forecast.latest_operational(engine())
 
 
+@st.cache_data(ttl=600)
+def cached_operational_eval() -> pd.DataFrame:
+    return forecast.operational_eval(engine())
+
+
 def fmt(v: float) -> str:
     return "—" if pd.isna(v) else f"{v:,.0f}".replace(",", " ")
 
@@ -196,6 +201,69 @@ def view_quality() -> None:
     )
 
 
+def view_history() -> None:
+    st.subheader("Historia prognoz: prognoza na jutro vs wykonanie")
+    st.caption(
+        "Każda doba: ostatnia prognoza wykonana dzień wcześniej (przeliczenie automatyczne "
+        "albo przycisk) porównana z wykonaniem PSE i z planem PSE. Doba pojawia się, gdy PSE "
+        "opublikuje pełne wykonanie (ok. 00:00–02:00 następnego dnia)."
+    )
+    df = cached_operational_eval()
+    daily = forecast.daily_summary(df)
+    if daily.empty:
+        st.info(
+            "Brak dób z pełnym wykonaniem. Pierwsza porównana doba pojawi się dzień po prognozie."
+        )
+        return
+    cols = st.columns(3)
+    cols[0].metric("Porównanych dób", len(daily))
+    cols[1].metric("MAE LightGBM", f"{fmt(daily['MAE_lightgbm'].mean())} MW")
+    cols[2].metric("MAE PSE", f"{fmt(daily['MAE_pse'].mean())} MW")
+
+    frame = daily.set_index("target_date")[["MAE_lightgbm", "MAE_pse"]]
+    frame.index = frame.index.astype(str)
+    frame.columns = ["LightGBM", "PSE (plan dobowy)"]
+    st.plotly_chart(
+        charts.lines(frame, "Dzienny MAE prognozy netto", "doba", markers=True),
+        width="stretch",
+        config=PLOT_CONFIG,
+    )
+
+    st.markdown("**Wg wersji kodu** — postęp narzędzia")
+    versions = forecast.version_summary(daily)
+    versions["code_version"] = versions["code_version"].astype(object).fillna("—")
+    st.dataframe(
+        versions.rename(
+            columns={
+                "code_version": "wersja kodu",
+                "first_day": "od doby",
+                "days": "dób",
+                "MAE_lightgbm": "MAE LightGBM",
+                "MAE_pse": "MAE PSE",
+            }
+        ).round(1),
+        hide_index=True,
+        width="stretch",
+    )
+    with st.expander("Tabela dzienna"):
+        st.dataframe(
+            daily.rename(
+                columns={
+                    "target_date": "doba",
+                    "code_version": "wersja kodu",
+                    "hours": "godzin",
+                    "MAE_lightgbm": "MAE LightGBM",
+                    "MAE_pse": "MAE PSE",
+                    "bias_lightgbm": "bias LightGBM",
+                }
+            )
+            .sort_values("doba", ascending=False)
+            .round(1),
+            hide_index=True,
+            width="stretch",
+        )
+
+
 def view_analysis() -> None:
     st.subheader("Analiza zapotrzebowania netto")
     df = cached_hourly()
@@ -258,10 +326,14 @@ sources()
 if bootstrap.db_is_empty(engine()):
     view_empty_database()
     st.stop()
-tab1, tab2, tab3 = st.tabs(["Prognoza na jutro", "Jakość prognoz", "Analiza"])
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["Prognoza na jutro", "Historia prognoz", "Jakość prognoz", "Analiza"]
+)
 with tab1:
     view_tomorrow()
 with tab2:
-    view_quality()
+    view_history()
 with tab3:
+    view_quality()
+with tab4:
     view_analysis()

@@ -112,7 +112,12 @@ def test_dashboard_starts():
         pytest.skip(f"Brak bazy z danymi: {exc}")
     at = AppTest.from_file(str(DASHBOARD), default_timeout=180).run()
     assert not at.exception
-    assert [t.label for t in at.tabs] == ["Prognoza na jutro", "Jakość prognoz", "Analiza"]
+    assert [t.label for t in at.tabs] == [
+        "Prognoza na jutro",
+        "Historia prognoz",
+        "Jakość prognoz",
+        "Analiza",
+    ]
     assert at.button[0].label == "Przelicz prognozę na jutro"
 
 
@@ -142,3 +147,27 @@ def test_engine_checks_connections():
     from common import db
 
     assert db.make_engine("postgresql+psycopg://u:p@h/db").pool._pre_ping
+
+
+def test_daily_and_version_summary():
+    hours = pd.date_range("2026-11-13 23:00", periods=48, freq="h", tz="UTC")
+    df = pd.DataFrame(
+        {
+            "target_date": [date(2026, 11, 14)] * 24 + [date(2026, 11, 15)] * 24,
+            "hour_utc": hours,
+            "code_version": ["aaa"] * 24 + ["bbb"] * 24,
+            "net_demand_hat": 1100.0,
+            "net_demand": [1000.0] * 24 + [1000.0] * 23 + [np.nan],  # 15.11 niekompletna
+            "net_demand_pse": 1050.0,
+        }
+    )
+    daily = forecast.daily_summary(df)
+    assert list(daily["target_date"]) == [date(2026, 11, 14)]
+    row = daily.iloc[0]
+    assert row["MAE_lightgbm"] == pytest.approx(100) and row["MAE_pse"] == pytest.approx(50)
+    assert row["bias_lightgbm"] == pytest.approx(100)
+    df.loc[df.index[-1], "net_demand"] = 900.0
+    versions = forecast.version_summary(forecast.daily_summary(df))
+    assert list(versions["code_version"]) == ["aaa", "bbb"]
+    assert versions.loc[1, "MAE_lightgbm"] == pytest.approx((23 * 100 + 200) / 24)
+    assert forecast.daily_summary(df.iloc[0:0]).empty
