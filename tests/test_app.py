@@ -129,3 +129,16 @@ def test_bootstrap_detects_raw_data(tmp_path):
     (tmp_path / "raw" / "openmeteo").mkdir(parents=True)
     (tmp_path / "raw" / "openmeteo" / "2026-11.parquet").write_bytes(b"")
     assert bootstrap.has_raw_data(tmp_path)
+
+
+def test_charts_are_not_zoomable():
+    """Na ekranach dotykowych przeciąganie nie może przybliżać wykresu (blokowało przewijanie)."""
+    fig = charts.lines(pd.DataFrame({"LightGBM": [1.0, 2.0]}), "t")
+    assert fig.layout.dragmode is False
+    assert fig.layout.xaxis.fixedrange and fig.layout.yaxis.fixedrange
+
+
+def test_engine_checks_connections():
+    from common import db
+
+    assert db.make_engine("postgresql+psycopg://u:p@h/db").pool._pre_ping

@@ -95,3 +95,27 @@ def test_render_all_writes_files(tmp_path):
     assert len(list(tmp_path.glob("*.png"))) == 7
     assert (tmp_path / "p2_4_tabele.md").exists()
     assert list(tables["kaczka_czerwiec"].columns) == [2025, 2026]
+
+
+def test_evaluate_rmse_not_below_mae():
+    from tests.test_p2_features import synthetic_actual
+
+    a = synthetic_actual(date(2025, 6, 1), date(2025, 6, 10))
+    rng = np.random.default_rng(1)
+    fc = pd.DataFrame(
+        {
+            "target_date": a["business_date"],
+            "hour_utc": a["hour_utc"],
+            "hour_local": a["hour_utc"].dt.tz_convert("Europe/Warsaw").dt.hour,
+            "y": a["net_demand"],
+        }
+    )
+    for i, col in enumerate(["naive_d1", "naive_week", "lightgbm", "net_demand_pse"]):
+        fc[col] = fc["y"] + rng.normal(0, 100 * (i + 1), len(fc))
+    from p2 import backtest
+
+    t = backtest.evaluate(fc)
+    assert (t["RMSE"] >= t["MAE"]).all()
+    assert t.loc["PSE (plan dobowy)", "MAE"] == pytest.approx(
+        (fc["net_demand_pse"] - fc["y"]).abs().mean()
+    )
