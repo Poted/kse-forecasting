@@ -67,8 +67,8 @@ Inż uczy się na danych o ograniczeniach od 27.09.2024. Wybrany wariant: P2 gen
 | P2.2 | zrobione (8.11.2026) | — (punkty pogodowe: decyzja 8.11) |
 | P2.3 | zrobione (13.11.2026) | — |
 | P2.4 | zrobione (13.11.2026) | — |
-| P2.5 | nierozpoczęty | — (historyczne prognozy od 27.09.2024: decyzja 8.11) |
-| P2.6 | nierozpoczęty | — (prognoza na jutro ręcznie: decyzja 8.11) |
-| P2.7 | nierozpoczęty | akceptacja tagu `p2-v1.0` |
+| P2.5 | zrobione (13.11.2026) | — (historyczne prognozy od 27.09.2024: decyzja 8.11; pogoda _previous_day2: decyzja 13.11) |
+| P2.6 | zrobione (13.11.2026) | — (prognoza na jutro ręcznie: decyzja 8.11) |
+| P2.7 | dokumentacja gotowa (14.11.2026); tag `p2-v1.0` czeka na akceptację | akceptacja tagu `p2-v1.0` |
 | I1–I6 | nierozpoczęte | — |
 | Tekst inż | nierozpoczęty (prowadzony w rozmowie w projekcie) | — |

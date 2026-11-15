@@ -8,10 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.engine import Connection, Engine
 
@@ -91,7 +93,36 @@ weather_forecast = sa.Table(
     ),
     _ts("time_utc", primary_key=True, comment="znacznik godziny z Open-Meteo, UTC"),
     *[sa.Column(v, sa.Float) for v in openmeteo.VARIABLES],
-    comment="Prognoza pogody wydana dobę wcześniej (Open-Meteo, zmienne _previous_day1)",
+    comment="Prognoza pogody wydana 48 h przed godziną docelową (Open-Meteo, _previous_day2)",
+)
+
+model_run = sa.Table(
+    "model_run",
+    metadata,
+    sa.Column("run_id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("model", sa.Text, nullable=False, index=True),
+    _ts("created_at", nullable=False, server_default=sa.func.now()),
+    sa.Column("code_version", sa.Text, comment="git commit kodu"),
+    sa.Column("params", JSONB, comment="parametry modelu i cechy"),
+    sa.Column("train_info", JSONB, comment="okna treningowe walidacji kroczącej"),
+    sa.Column("metrics", JSONB, comment="metryki na okresie testowym"),
+    comment="Rejestr przebiegów modeli (FR-06)",
+)
+p2_forecast = sa.Table(
+    "p2_forecast",
+    metadata,
+    sa.Column(
+        "run_id",
+        sa.Integer,
+        sa.ForeignKey("model_run.run_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    _ts("hour_utc", primary_key=True, comment="początek godziny docelowej, UTC"),
+    sa.Column("target_date", sa.Date, nullable=False, index=True, comment="doba docelowa D+1"),
+    sa.Column("forecast_date", sa.Date, nullable=False, comment="doba D wykonania prognozy"),
+    _ts("forecast_moment_utc", nullable=False, comment="D 12:00 czasu lokalnego, UTC"),
+    sa.Column("net_demand_hat", sa.Float, nullable=False, comment="prognoza netto [MW]"),
+    comment="Prognozy zapotrzebowania netto P2 na D+1 (historyczne z walidacji kroczącej, FR-09)",
 )
 
 PSE_TABLES: dict[str, sa.Table] = {
@@ -144,6 +175,12 @@ VIEWS: dict[str, str] = {
                count(*) AS n_points
         FROM weather_forecast
         GROUP BY time_utc""",
+    "v_p2_forecast_latest": """
+        SELECT r.model, f.hour_utc, f.target_date, f.forecast_date, f.forecast_moment_utc,
+               f.net_demand_hat, f.run_id
+        FROM p2_forecast f
+        JOIN model_run r USING (run_id)
+        WHERE f.run_id = (SELECT max(r2.run_id) FROM model_run r2 WHERE r2.model = r.model)""",
 }
 
 VIEW_COMMENTS = {
@@ -151,6 +188,7 @@ VIEW_COMMENTS = {
     "v_plan_h": "Plan PSE godzinowo; net_demand_pse = benchmark P2",
     "v_rce_h": "RCE godzinowo (średnia i minimum z kwadransów)",
     "v_pogoda_h": "Pogoda: średnia z punktów (decyzja 08.11), znacznik godziny jak w Open-Meteo",
+    "v_p2_forecast_latest": "Prognozy P2 z ostatniego przebiegu każdego modelu",
 }
 
 
@@ -226,18 +264,30 @@ class LoadResult:
     rows: int
 
 
-def load_all(engine: Engine, data_dir: Path, schema: str | None = None) -> list[LoadResult]:
-    """Ładuje wszystkie pliki parquet z `data/raw` do bazy (plik po pliku, upsert)."""
+def load_all(
+    engine: Engine, data_dir: Path, schema: str | None = None, since: date | None = None
+) -> list[LoadResult]:
+    """Ładuje pliki parquet z `data/raw` do bazy (plik po pliku, upsert).
+
+    `since`: tylko pliki miesięcy ≥ miesiąc tej daty (szybkie odświeżenie ostatnich dób).
+    """
+    first = f"{since:%Y-%m}" if since else ""
     results = []
     with engine.begin() as conn:
         if schema:
             conn.execute(sa.text(f'SET search_path TO "{schema}"'))
         for report, table in PSE_TABLES.items():
-            files = sorted((data_dir / "raw" / "pse" / report).glob("*.parquet"))
+            files = [
+                f
+                for f in sorted((data_dir / "raw" / "pse" / report).glob("*.parquet"))
+                if f.stem >= first
+            ]
             n = sum(upsert(conn, table, prepare_pse(pd.read_parquet(f))) for f in files)
             results.append(LoadResult(table.name, len(files), n))
         point_ids = load_points(conn, openmeteo.load_points())
-        files = sorted((data_dir / "raw" / "openmeteo").glob("*.parquet"))
+        files = [
+            f for f in sorted((data_dir / "raw" / "openmeteo").glob("*.parquet")) if f.stem >= first
+        ]
         n = sum(
             upsert(conn, weather_forecast, prepare_weather(pd.read_parquet(f), point_ids))
             for f in files
@@ -283,7 +333,9 @@ def erd_mermaid() -> str:
         sa.DateTime: "timestamptz",
         sa.Date: "date",
         sa.Float: "float8",
-        sa.SmallInteger: "int2",
+        sa.SmallInteger: "int2",  # przed Integer (podklasa)
+        sa.Integer: "int4",
+        JSONB: "jsonb",
         sa.Text: "text",
     }
     lines = ["erDiagram"]

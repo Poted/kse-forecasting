@@ -16,13 +16,13 @@ POINTS = [openmeteo.Point("Warszawa", 52.2297, 21.0122), openmeteo.Point("Krakó
 
 
 def payload():
-    return json.loads((FIX / "openmeteo_2pkt_2025-06-21.json").read_text(encoding="utf-8"))
+    return json.loads((FIX / "openmeteo_day2_2pkt_2025-06-21.json").read_text(encoding="utf-8"))
 
 
-def test_request_params_use_previous_day1():
+def test_request_params_use_previous_day2():
     params = openmeteo.request_params(POINTS, date(2025, 6, 21), date(2025, 6, 21))
     assert params["latitude"] == "52.2297,50.0647"
-    assert all(v.endswith("_previous_day1") for v in params["hourly"].split(","))
+    assert all(v.endswith("_previous_day2") for v in params["hourly"].split(","))
     assert params["timezone"] == "GMT"
 
 

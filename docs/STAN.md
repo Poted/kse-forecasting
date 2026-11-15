@@ -3,9 +3,56 @@
 Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ## Decyzje potrzebne
-- (brak blokujących)
+- **Tag `p2-v1.0`** (koniec P2): wymaga akceptacji użytkownika (`CLAUDE.md`) i scalenia PR #3 do `main`. Proponowana kolejność: przegląd i testy użytkownika → scalenie PR #3 → tag na `main`.
 
 ---
+
+## 2026-11-15 · Środowisko pracy (laptop, telefon, chmura)
+**Decyzja użytkownika (15.11, zapisana w `00_fundament.md` sekcja 5):** testy na laptopie z Windows; dashboard do przeglądania z telefonu na Streamlit Community Cloud + Neon; praca nad kodem z telefonu w sesjach Claude Code.
+
+**Zrobione:**
+- `kse-init` (`app/bootstrap.py`) — jedno polecenie: pobranie/odświeżenie danych, ładowanie (pełne, gdy baza pusta), walidacja (gdy brak), prognoza na jutro. Błąd Open-Meteo (HTTP 429) przy odświeżaniu nie przerywa pracy.
+- Przygotowanie do Streamlit Cloud: `packages.txt` (`libgomp1`), adres bazy w formacie Neon (`postgresql://…?sslmode=require`) zamieniany na sterownik psycopg 3, dashboard importuje pakiety projektu bez instalacji projektu. Zależności z `uv.lock` (obsługiwany przez Streamlit Cloud — dokumentacja Streamlit).
+- Dashboard: bez paska narzędzi Plotly (zasłaniał tytuły na telefonie); widok telefonu sprawdzony (emulacja iPhone 13).
+- Instrukcja: `docs/srodowisko.md` (Windows, telefon w sieci domowej, Neon, Streamlit Cloud, praca z telefonu).
+
+**Wyniki:** scenariusz chmurowy odtworzony lokalnie: pusta baza + adres w formacie Neon → `kse-init` (pełne ładowanie, walidacja MAE 797 MW, prognoza na 16.11) w 3,5 min; dashboard uruchomiony na tej bazie bez błędów. `pytest` 59 passed, `ruff` bez błędów.
+
+**Do zrobienia przez użytkownika:** konta Neon i Streamlit Cloud, załadowanie bazy z laptopa, wdrożenie aplikacji (kroki w `docs/srodowisko.md`). Warunek: scalenie PR #3 do `main`.
+
+## 2026-11-14 · P2.7 Dokumentacja — dokumentacja gotowa, tag czeka na akceptację
+**Zrobione:** `docs/P2/`: `README.md` (opis i skrót), `01_technologie.md` (wersje z `uv.lock`, uzasadnienie), `02_architektura.md` (diagramy komponentów, przepływu danych, momentu prognozy, wdrożenia), `03_model_danych.md` (ERD generowany ze schematu, tabele, widoki), `04_wyniki.md`, `05_instrukcja.md`, `06_testy.md`. Generator ERD: poprawione nazwy typów (`int4`, `jsonb` zamiast `INTEGER`, `JSONB`) + test.
+
+**Środowisko (14.11, za zgodą użytkownika):** dopuszczone `deb.debian.org` i `open-meteo.com`. Obraz Docker zbudowany z `Dockerfile` bez obejść (instalacja `libgomp1` z Debiana), `docker compose up -d` sprawdzone.
+
+**Wyniki:** 4 diagramy Mermaid w `docs/P2/` sprawdzone parserem i rendererem Mermaid 11.4.1. `pytest` 55 passed, `ruff` bez błędów.
+
+**Problemy:** brak. PR #3 (P2.5–P2.7) otwarty.
+
+**Pytania do kierownika (nieblokujące):** jak wcześniej — licencja danych PSE; aktualizacja opisu pogody w `01_dane.md` (`_previous_day2`).
+
+## 2026-11-13 · P2.6 Aplikacja — zrobione
+**Zrobione:** prognoza na jutro `uv run kse-p2 forecast` (`p2/forecast.py`: odświeżenie danych, trening do D−1, prognoza D+1, zapis jako `lightgbm_operacyjny`); dashboard Streamlit `uv run kse-app` z 3 widokami (prognoza na jutro z przyciskiem przeliczenia, jakość prognoz, analiza) i panelem źródeł/licencji; `Dockerfile` + usługa `app` w `docker-compose.yml`. Dokumentacja: `docs/etapy/P2.6.md`, zrzuty: `docs/fig/p2_6_widok_*.png`.
+
+**Wyniki:** prognoza na 14.11 policzona z aktualnych danych (39 s). `docker compose up -d` uruchamia bazę i dashboard (sprawdzone: oba kontenery działają, widoki renderują się). `pytest` 55 passed (w tym start dashboardu przez AppTest), `ruff` bez błędów.
+
+**Problemy:** 13.11 sieć sesji blokowała `deb.debian.org` (krok `apt-get install libgomp1`); 14.11 użytkownik dopuścił `deb.debian.org` i `open-meteo.com` — obraz zbudowany z `Dockerfile` bez obejść, `docker compose up -d` sprawdzone. PR #3 (P2.5) nadal otwarty — P2.6 na tej samej gałęzi, PR #3 zaktualizowany.
+
+**Pytania do kierownika (nieblokujące):**
+- Warunki korzystania z danych API PSE (licencja) — niesprawdzone; aplikacja podaje źródło. Czy jest znany dokument PSE do zacytowania w aplikacji i dokumentacji?
+- Następny etap P2.7 kończy się tagiem `p2-v1.0` — wymaga akceptacji użytkownika (zgodnie z `CLAUDE.md`).
+
+## 2026-11-13 · P2.5 Modele — zrobione
+**Zrobione:** cechy z kontrolą dostępności (`p2/features.py`), modele bazowe `naive_d1`, `naive_week`, LightGBM, walidacja krocząca z miesięcznym douczaniem (`p2/backtest.py`), CLI `uv run kse-p2 backtest`, tabele `model_run` i `p2_forecast`, widok `v_p2_forecast_latest`, test braku przecieku. Dokumentacja: `docs/etapy/P2.5.md`, metryki: `docs/fig/p2_5_metryki.md`.
+
+**Decyzja w sesji (13.11, zapisana w `00_fundament.md` sekcja 5):** pogoda `_previous_day2` zamiast `_previous_day1` — wg dokumentacji Open-Meteo `_previous_day1` to wartość prognozowana 24 h przed godziną docelową, czyli dla godzin D+1 po ok. 12:00 wydana po momencie prognozy. Pogoda pobrana ponownie od 13.06.2024. Uwaga: `01_dane.md` (sekcja Pogoda) nadal wskazuje `_previous_day1` — do aktualizacji przez użytkownika/rozmowę w projekcie.
+
+**Wyniki** (18 649 godzin, doby 27.09.2024–12.11.2026, wspólny zbiór): MAE [MW] — `naive_d1` 2 269, `naive_week` 1 555, **LightGBM 797** (MAPE 5,87%), PSE 531 (MAPE 4,14%). LightGBM 2025: 793, 2026: 721. PSE lepszy w 25 z 27 miesięcy (LightGBM lepszy w V i VI 2026). Cecha `pv_est` (szacunek PV z ostatnich 7 dób) obniżyła MAE z 819 do 797 i bias 2026 z +226 do +91 MW. Historyczne prognozy w bazie (przebiegi 7–9). `pytest` 50 passed, `ruff` bez błędów.
+
+**Problemy:** PR do `main`: https://github.com/Poted/kse-forecasting/pull/3 — otwarty (scalenie z sesji zablokowane uprawnieniami, jak PR #1). `open-meteo.com` poza listą dozwolonych hostów — dokumentację przeczytano ze źródeł strony w publicznym repozytorium `open-meteo/open-meteo-website` (stan z 10.11.2026).
+
+**Pytania do kierownika (nieblokujące):**
+- `01_dane.md`: zaktualizować opis pogody (`_previous_day2`, konwencja czasu `shortwave_radiation`)? Claude Code nie zmienia tego pliku.
 
 ## 2026-11-13 · P2.4 Analiza — zrobione
 **Zrobione:** `p2/analysis.py`, `p2/metrics.py`, `p2/plots.py`; notebook `p2/notebooks/P2.4_analiza.ipynb`; 7 wykresów i tabele w `docs/fig/`. Dokumentacja: `docs/etapy/P2.4.md`. Nowe zależności: `matplotlib`; dev: `ipykernel`, `nbconvert`, `nbformat`.

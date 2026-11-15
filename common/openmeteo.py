@@ -1,8 +1,13 @@
 """Klient Open-Meteo: poprzednie przebiegi modeli (Previous Runs API).
 
-Zmienne z przyrostkiem `_previous_day1` to prognoza wydana dobę wcześniej
-(https://open-meteo.com/en/docs/previous-runs-api) — odpowiada informacji
-dostępnej przy prognozie na dobę naprzód.
+Wg dokumentacji (https://open-meteo.com/en/docs/previous-runs-api) zmienna z przyrostkiem
+`_previous_dayN` to wartość prognozowana N × 24 h przed godziną docelową. Używamy
+`_previous_day2` (decyzja 13.11, `context/00_fundament.md` sekcja 5): dla każdej godziny
+doby D+1 prognoza wydana najpóźniej o 23:00 dnia D−1, czyli dostępna o 12:00 dnia D.
+`_previous_day1` dla godzin D+1 po ok. 12:00 byłaby wydana po momencie prognozy (przeciek).
+
+Konwencja czasu (dokumentacja Open-Meteo): `shortwave_radiation` — średnia z godziny
+poprzedzającej znacznik; `temperature_2m`, `cloud_cover`, `wind_speed_100m` — wartości chwilowe.
 """
 
 from __future__ import annotations
@@ -20,9 +25,10 @@ from common.config import PROJECT_ROOT
 from common.http import get_json
 
 BASE_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
-START_DATE = date(2024, 6, 14)
+START_DATE = date(2024, 6, 13)  # doba handlowa 14.06.2024 zaczyna się 13.06 22:00 UTC
 VARIABLES = ("shortwave_radiation", "cloud_cover", "temperature_2m", "wind_speed_100m")
-SUFFIX = "_previous_day1"
+LEAD_DAYS = 2
+SUFFIX = f"_previous_day{LEAD_DAYS}"
 POINTS_FILE = PROJECT_ROOT / "config" / "punkty_pogodowe.toml"
 
 

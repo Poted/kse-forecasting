@@ -8,6 +8,8 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
+from common import openmeteo
+
 WARSAW = ZoneInfo("Europe/Warsaw")
 
 
@@ -135,7 +137,7 @@ def to_markdown(pse: list[PseCheck], weather: WeatherCheck | None, generated: da
     if weather is not None:
         lines += [
             "",
-            "## Open-Meteo (`_previous_day1`)",
+            f"## Open-Meteo (`{openmeteo.SUFFIX}`)",
             "",
             f"Zakres: {weather.start} – {weather.end} (doby UTC), wiersze: {weather.rows}, "
             f"duplikaty (punkt, godzina): {weather.duplicate_rows}.",
