@@ -41,4 +41,16 @@ def load_settings(env_file: Path | None = None) -> Settings:
     database_url = os.environ.get("DATABASE_URL") or file_values.get("DATABASE_URL")
     if not database_url:
         raise RuntimeError("Brak DATABASE_URL. Skopiuj .env.example do .env i uzupełnij wartości.")
-    return Settings(database_url=database_url)
+    return Settings(database_url=normalize_database_url(database_url))
+
+
+def normalize_database_url(url: str) -> str:
+    """`postgresql://` / `postgres://` (format np. Neon) → sterownik psycopg 3 używany w projekcie.
+
+    SQLAlchemy dla `postgresql://` wybiera domyślnie psycopg2, którego projekt nie instaluje.
+    Parametry (np. `?sslmode=require`) zostają bez zmian.
+    """
+    for prefix in ("postgresql://", "postgres://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix) :]
+    return url

@@ -7,6 +7,19 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-15 · Środowisko pracy (laptop, telefon, chmura)
+**Decyzja użytkownika (15.11, zapisana w `00_fundament.md` sekcja 5):** testy na laptopie z Windows; dashboard do przeglądania z telefonu na Streamlit Community Cloud + Neon; praca nad kodem z telefonu w sesjach Claude Code.
+
+**Zrobione:**
+- `kse-init` (`app/bootstrap.py`) — jedno polecenie: pobranie/odświeżenie danych, ładowanie (pełne, gdy baza pusta), walidacja (gdy brak), prognoza na jutro. Błąd Open-Meteo (HTTP 429) przy odświeżaniu nie przerywa pracy.
+- Przygotowanie do Streamlit Cloud: `packages.txt` (`libgomp1`), adres bazy w formacie Neon (`postgresql://…?sslmode=require`) zamieniany na sterownik psycopg 3, dashboard importuje pakiety projektu bez instalacji projektu. Zależności z `uv.lock` (obsługiwany przez Streamlit Cloud — dokumentacja Streamlit).
+- Dashboard: bez paska narzędzi Plotly (zasłaniał tytuły na telefonie); widok telefonu sprawdzony (emulacja iPhone 13).
+- Instrukcja: `docs/srodowisko.md` (Windows, telefon w sieci domowej, Neon, Streamlit Cloud, praca z telefonu).
+
+**Wyniki:** scenariusz chmurowy odtworzony lokalnie: pusta baza + adres w formacie Neon → `kse-init` (pełne ładowanie, walidacja MAE 797 MW, prognoza na 16.11) w 3,5 min; dashboard uruchomiony na tej bazie bez błędów. `pytest` 59 passed, `ruff` bez błędów.
+
+**Do zrobienia przez użytkownika:** konta Neon i Streamlit Cloud, załadowanie bazy z laptopa, wdrożenie aplikacji (kroki w `docs/srodowisko.md`). Warunek: scalenie PR #3 do `main`.
+
 ## 2026-11-14 · P2.7 Dokumentacja — dokumentacja gotowa, tag czeka na akceptację
 **Zrobione:** `docs/P2/`: `README.md` (opis i skrót), `01_technologie.md` (wersje z `uv.lock`, uzasadnienie), `02_architektura.md` (diagramy komponentów, przepływu danych, momentu prognozy, wdrożenia), `03_model_danych.md` (ERD generowany ze schematu, tabele, widoki), `04_wyniki.md`, `05_instrukcja.md`, `06_testy.md`. Generator ERD: poprawione nazwy typów (`int4`, `jsonb` zamiast `INTEGER`, `JSONB`) + test.
 

@@ -38,6 +38,13 @@ def has_raw_data(data_dir: Path) -> bool:
     return all(any(d.glob("*.parquet")) for d in dirs)
 
 
+def db_is_empty(engine: Engine) -> bool:
+    with engine.connect() as conn:
+        return (
+            conn.execute(sa.select(sa.func.count()).select_from(db.his_wlk_cal)).scalar_one() == 0
+        )
+
+
 def has_backtest(engine: Engine) -> bool:
     with engine.connect() as conn:
         n = conn.execute(
@@ -67,7 +74,10 @@ def run(engine: Engine, data_dir: Path, skip_download: bool = False) -> dict:
                 raise
             log.warning("Pogoda nieodświeżona (%s) — używam danych z dysku.", exc)
             summary["pogoda"] = "nieodświeżona (błąd API Open-Meteo) — dane z poprzedniego pobrania"
-        db.load_all(engine, data_dir, since=since)
+        # Pusta baza (np. nowa baza w chmurze) → ładowanie wszystkich plików.
+        load_since = None if db_is_empty(engine) else since
+        summary["ładowanie"] = "pełne" if load_since is None else "ostatnie miesiące"
+        db.load_all(engine, data_dir, since=load_since)
 
     if has_backtest(engine):
         summary["walidacja"] = "jest w bazie"

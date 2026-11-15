@@ -39,3 +39,19 @@ def test_read_env_file_missing_returns_empty(tmp_path):
 
 def test_env_example_has_database_url():
     assert "DATABASE_URL" in read_env_file(PROJECT_ROOT / ".env.example")
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        (
+            "postgresql://u:p@ep-x.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+            "postgresql+psycopg://u:p@ep-x.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+        ),
+        ("postgres://u:p@h/db", "postgresql+psycopg://u:p@h/db"),
+        ("postgresql+psycopg://u:p@h/db", "postgresql+psycopg://u:p@h/db"),
+    ],
+)
+def test_database_url_normalized_for_psycopg3(url, expected, tmp_path, monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", url)
+    assert load_settings(tmp_path / "brak.env").database_url == expected

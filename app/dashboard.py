@@ -5,7 +5,15 @@ Uruchomienie: `uv run kse-app` (albo `docker compose up -d` — usługa `app`).
 
 from __future__ import annotations
 
+import sys
 from datetime import timedelta
+from pathlib import Path
+
+# Hosting (np. Streamlit Community Cloud) uruchamia `streamlit run app/dashboard.py`; pakiety
+# projektu (`app`, `common`, `p2`) muszą być importowalne także bez instalacji projektu.
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 import pandas as pd
 import streamlit as st
