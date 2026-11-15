@@ -114,3 +114,18 @@ def test_dashboard_starts():
     assert not at.exception
     assert [t.label for t in at.tabs] == ["Prognoza na jutro", "Jakość prognoz", "Analiza"]
     assert at.button[0].label == "Przelicz prognozę na jutro"
+
+
+def test_bootstrap_detects_raw_data(tmp_path):
+    from app import bootstrap
+    from common import pse
+
+    assert not bootstrap.has_raw_data(tmp_path)
+    for r in pse.REPORTS:
+        d = tmp_path / "raw" / "pse" / r
+        d.mkdir(parents=True)
+        (d / "2026-11.parquet").write_bytes(b"")
+    assert not bootstrap.has_raw_data(tmp_path)  # brak pogody → pełne pobranie
+    (tmp_path / "raw" / "openmeteo").mkdir(parents=True)
+    (tmp_path / "raw" / "openmeteo" / "2026-11.parquet").write_bytes(b"")
+    assert bootstrap.has_raw_data(tmp_path)
