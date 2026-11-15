@@ -17,6 +17,9 @@ from p2 import analysis, backtest, forecast
 
 st.set_page_config(page_title="KSE — zapotrzebowanie netto", layout="wide")
 
+# Bez paska narzędzi Plotly: na ekranach dotykowych jest stale widoczny i zasłania tytuły.
+PLOT_CONFIG = {"displayModeBar": False}
+
 
 @st.cache_resource
 def engine():
@@ -87,7 +90,9 @@ def view_tomorrow() -> None:
     for w in (run.get("train_info") or {}).get("warnings", []):
         st.warning(w)
     st.plotly_chart(
-        charts.forecast_chart(latest, f"Doba {target}: prognoza netto"), width="stretch"
+        charts.forecast_chart(latest, f"Doba {target}: prognoza netto"),
+        width="stretch",
+        config=PLOT_CONFIG,
     )
     table = pd.DataFrame(
         {
@@ -144,7 +149,9 @@ def view_quality() -> None:
     ].set_index("hour_utc")
     series = week[["y", "lightgbm", "net_demand_pse"]].rename(columns=charts.MODEL_LABEL)
     series.index = series.index.tz_convert("Europe/Warsaw").tz_localize(None)
-    st.plotly_chart(charts.lines(series, "Prognoza vs wykonanie"), width="stretch")
+    st.plotly_chart(
+        charts.lines(series, "Prognoza vs wykonanie"), width="stretch", config=PLOT_CONFIG
+    )
 
     c1, c2 = st.columns(2)
     c1.plotly_chart(
@@ -152,10 +159,15 @@ def view_quality() -> None:
             backtest.mae_by(fc, "hour_local"), "MAE wg godziny", "godzina (czas lokalny)"
         ),
         width="stretch",
+        config=PLOT_CONFIG,
     )
     by_month = backtest.mae_by(fc, "month")
     by_month.index = by_month.index.astype(str)
-    c2.plotly_chart(charts.by_group_mae(by_month, "MAE wg miesiąca", "miesiąc"), width="stretch")
+    c2.plotly_chart(
+        charts.by_group_mae(by_month, "MAE wg miesiąca", "miesiąc"),
+        width="stretch",
+        config=PLOT_CONFIG,
+    )
 
 
 def view_analysis() -> None:
@@ -171,12 +183,14 @@ def view_analysis() -> None:
     c1.plotly_chart(
         charts.lines(season, "Profil dobowy netto wg pory roku", "godzina", charts.SEASON_COLORS),
         width="stretch",
+        config=PLOT_CONFIG,
     )
     june = analysis.june_profiles(df)
     june.columns = [str(c) for c in june.columns]
     c2.plotly_chart(
         charts.lines(june, "Krzywa kaczki: netto w czerwcu, kolejne lata", "godzina"),
         width="stretch",
+        config=PLOT_CONFIG,
     )
     duck = analysis.duck_depth(df)[["evening_max", "midday_min"]]
     duck.index = duck.index.astype(str)
@@ -189,12 +203,15 @@ def view_analysis() -> None:
             markers=True,
         ),
         width="stretch",
+        config=PLOT_CONFIG,
     )
     monthly = analysis.monthly_means(df)
     monthly.index = monthly.index.astype(str)
     monthly.columns = ["zapotrzebowanie", "generacja PV", "netto"]
     st.plotly_chart(
-        charts.lines(monthly, "Średnie miesięczne", "miesiąc", markers=True), width="stretch"
+        charts.lines(monthly, "Średnie miesięczne", "miesiąc", markers=True),
+        width="stretch",
+        config=PLOT_CONFIG,
     )
 
 
