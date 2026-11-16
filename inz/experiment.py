@@ -12,8 +12,10 @@ Próg decyzyjny (F1): wyznaczany wyłącznie na okresie treningowym — prognozy
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -40,6 +42,17 @@ def prepare(data: pd.DataFrame, target: models.Target) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
+def split(
+    data: pd.DataFrame, target: models.Target, test_end: date | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Zwraca (wszystkie doby, trening ≤ TRAIN_END, test > TRAIN_END)."""
+    df = prepare(data, target)
+    days = df["business_date"]
+    train = df[days <= TRAIN_END]
+    test = df[(days > TRAIN_END) & (days <= (test_end or days.max()))]
+    return df, train, test
+
+
 def walk_cutoff(block_start: date) -> date:
     """Ostatnia doba treningowa dla bloku miesiąca M: koniec miesiąca M−2."""
     first_of_month = block_start.replace(day=1)
@@ -52,31 +65,34 @@ class Result:
     target: models.Target
     predictions: pd.DataFrame  # dtime_utc, business_date, cel, model, schemat, p_hat, mw_hat
     metrics: pd.DataFrame  # wiersz: (model, schemat)
-    metrics_day: pd.DataFrame  # tylko kwadranse z planowaną generacją PV > 0
     thresholds: dict[str, float]
     train_info: dict[str, list[dict]]
-    importance: pd.DataFrame
-    final_model: models.LightGBMModel
-    zero_mae: dict[str, float]  # MAE prognozy zerowej (punkt odniesienia)
-    test: pd.DataFrame  # dtime_utc, business_date, cele, gen_fv
     params: dict[str, dict] = field(default_factory=dict)
+    zero_mae: dict[str, float] = field(default_factory=dict)  # MAE prognozy zerowej
+    metrics_day: pd.DataFrame | None = None  # tylko kwadranse z planowaną generacją PV > 0
+    test: pd.DataFrame | None = None  # dtime_utc, business_date, cele, gen_fv
+    fitted: dict = field(default_factory=dict)  # nazwa → model uczony na dobach ≤ TRAIN_END
 
 
-def run(data: pd.DataFrame, target: models.Target, test_end: date | None = None) -> Result:
-    df = prepare(data, target)
+def run(
+    data: pd.DataFrame,
+    target: models.Target,
+    test_end: date | None = None,
+    model_classes: tuple = models.MODELS,
+) -> Result:
+    df, train, test = split(data, target, test_end)
     days = df["business_date"]
-    train = df[days <= TRAIN_END]
-    test = df[(days > TRAIN_END) & (days <= (test_end or days.max()))]
     blocks = monthly_blocks(test["business_date"].min(), test["business_date"].max())
 
     preds, thresholds, info, params = [], {}, {}, {}
-    final = None
-    for cls in models.MODELS:
+    fitted = {}
+    for cls in model_classes:
         name = cls.name
-        params[name] = cls.params
         thresholds[name] = cv_threshold(cls, train, target)
 
         static = cls().fit(train, target)
+        params[name] = static.params
+        fitted[name] = static
         preds.append(_frame(test, static.predict(test), name, "staly"))
         info[name] = []
         for start, end in blocks:
@@ -92,8 +108,6 @@ def run(data: pd.DataFrame, target: models.Target, test_end: date | None = None)
                     "train_rows": len(part),
                 }
             )
-        if cls is models.LightGBMModel:
-            final = static
     zero = test[target.mw]
     zero_mae = {"MAE": float(zero.mean()), "MAE_ogr": float(zero[test[target.flag] == 1].mean())}
     predictions = pd.concat(preds, ignore_index=True)
@@ -108,8 +122,7 @@ def run(data: pd.DataFrame, target: models.Target, test_end: date | None = None)
         metrics_day=_table(joined[joined["gen_fv"] > 0], target, thresholds),
         thresholds=thresholds,
         train_info=info,
-        importance=final.importance(),
-        final_model=final,
+        fitted=fitted,
         zero_mae=zero_mae,
         test=test[["dtime_utc", "business_date", target.flag, target.mw, "gen_fv"]],
         params=params,
@@ -155,7 +168,9 @@ def run_name(target: models.Target, model: str, scheme: str) -> str:
     return f"inz_c1_{target.key}_{model}_{scheme}"
 
 
-def save(engine: Engine, result: Result, schema: str | None = None) -> dict[str, int]:
+def save(
+    engine: Engine, result: Result, schema: str | None = None, version: str | None = None
+) -> dict[str, int]:
     """Zapisuje przebiegi (model × schemat) i prognozy testowe. Zwraca {nazwa: run_id}."""
     run_ids = {}
     with engine.begin() as conn:
@@ -168,7 +183,7 @@ def save(engine: Engine, result: Result, schema: str | None = None) -> dict[str,
                 sa.insert(db.model_run).returning(db.model_run.c.run_id),
                 {
                     "model": name,
-                    "code_version": code_version(),
+                    "code_version": version or code_version(),
                     "params": {
                         **result.params[model],
                         "target": result.target.key,
@@ -186,3 +201,75 @@ def save(engine: Engine, result: Result, schema: str | None = None) -> dict[str,
             db.upsert(conn, db.inz_prediction, frame, batch=10_000)
             run_ids[name] = run_id
     return run_ids
+
+
+# --- pliki wynikowe (Colab → Dysk → import do bazy) ---------------------------
+
+
+def dump(result: Result, out_dir: Path, prefix: str, extra: dict | None = None) -> None:
+    """Zapisuje metryki, progi, parametry (JSON) i prognozy (parquet) w `out_dir`."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "target": result.target.key,
+        "code_version": code_version(),
+        "metrics": result.metrics.reset_index().to_dict("records"),
+        "metrics_day": result.metrics_day.reset_index().to_dict("records"),
+        "thresholds": result.thresholds,
+        "train_info": result.train_info,
+        "params": result.params,
+        "zero_mae": result.zero_mae,
+        **(extra or {}),
+    }
+    path = out_dir / f"{prefix}_{result.target.key}_wynik.json"
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=1, default=_json), "utf-8")
+    result.predictions.to_parquet(out_dir / f"{prefix}_{result.target.key}_prognozy.parquet")
+
+
+def _json(value):
+    if isinstance(value, (np.floating, np.integer)):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    return str(value)
+
+
+def load(out_dir: Path, prefix: str, target: models.Target) -> tuple[Result, dict]:
+    """Odczyt plików z `dump`. Zwraca (wynik do `save`, pełna zawartość JSON)."""
+    path = out_dir / f"{prefix}_{target.key}_wynik.json"
+    payload = json.loads(path.read_text("utf-8"))
+    index = ["model", "schemat"]
+    predictions = pd.read_parquet(out_dir / f"{prefix}_{target.key}_prognozy.parquet")
+    predictions["dtime_utc"] = pd.to_datetime(predictions["dtime_utc"], utc=True)
+    predictions["business_date"] = pd.to_datetime(predictions["business_date"]).dt.date
+    result = Result(
+        target=target,
+        predictions=predictions,
+        metrics=pd.DataFrame(payload["metrics"]).set_index(index),
+        metrics_day=pd.DataFrame(payload["metrics_day"]).set_index(index),
+        thresholds=payload["thresholds"],
+        train_info=payload["train_info"],
+        params=payload["params"],
+        zero_mae=payload["zero_mae"],
+    )
+    return result, payload
+
+
+def latest_metrics(
+    engine: Engine, target: models.Target, schema: str | None = None
+) -> pd.DataFrame:
+    """Metryki ostatniego przebiegu każdego modelu celu (wiersz: nazwa przebiegu)."""
+    sql = """
+        SELECT DISTINCT ON (model) model, run_id, metrics, params
+        FROM model_run WHERE model LIKE :pattern ORDER BY model, run_id DESC"""
+    with engine.connect() as conn:
+        if schema:
+            conn.execute(sa.text(f'SET search_path TO "{schema}"'))
+        runs = pd.read_sql(sa.text(sql), conn, params={"pattern": f"inz_c1_{target.key}_%"})
+    table = pd.DataFrame(list(runs["metrics"]), index=runs["model"])
+    table["schemat"] = [p["scheme"] for p in runs["params"]]
+    prefix = f"inz_c1_{target.key}_"
+    table["model"] = [
+        name[len(prefix) : -len(s) - 1]
+        for name, s in zip(runs["model"], table["schemat"], strict=True)
+    ]
+    return table.set_index(["model", "schemat"])

@@ -72,5 +72,6 @@ Inż uczy się na danych o ograniczeniach od 27.09.2024. Wybrany wariant: P2 gen
 | P2.7 | zrobione (16.11.2026); tag `p2-v1.0` na gałęzi `p2` | — (tag zaakceptowany 16.11) |
 | I1 | zrobione (16.11.2026) | — |
 | I2 | zrobione (16.11.2026) | — |
-| I3–I6 | nierozpoczęte | — |
+| I3 | zrobione (16.11.2026) — przebieg na CPU; notebook Colab do uruchomienia przez użytkownika | — |
+| I4–I6 | nierozpoczęte | — |
 | Tekst inż | nierozpoczęty (prowadzony w rozmowie w projekcie) | — |

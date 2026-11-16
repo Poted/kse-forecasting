@@ -255,3 +255,8 @@ def test_save_runs_and_predictions(engine_schema, result):
     assert row["params"]["target"] == "balance" and 0 < row["params"]["threshold"] < 1
     assert row["metrics"]["AUC"] > 0.9
     assert len(n) == len(run_ids) and n["n"].nunique() == 1
+    # metryki ostatnich przebiegów: indeks (model, schemat) jak w tabeli eksperymentu
+    latest = experiment.latest_metrics(engine, TARGET, schema)
+    assert set(latest.index) == set(result.metrics.index)
+    key = ("lightgbm_2etapy", "kroczacy")
+    assert latest.loc[key, "AP"] == pytest.approx(result.metrics.loc[key, "AP"])
