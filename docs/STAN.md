@@ -8,7 +8,8 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 ---
 
 ## 2026-11-16 · Koniec P2: tag `p2-v1.0`
-- Tag `p2-v1.0` na gałęzi `p2` (akceptacja użytkownika 16.11). P2.7 — zrobione.
+- Tag `p2-v1.0` na gałęzi `p2` (akceptacja użytkownika 16.11), commit `4acbb31`. P2.7 — zrobione.
+- Sesja Claude Code nie może tworzyć tagów (proxy git i API odrzuca zapis tagów) — **tag zakłada użytkownik** (GitHub → Releases → nowy tag `p2-v1.0`, cel: gałąź `p2`). Kolejne sesje: tagi zawsze przez użytkownika.
 - Dalsze poprawki P2 z testów: commit na `p2` → merge do `main`; kolejne tagi `p2-v1.1`, … po akceptacji.
 - Przed oddaniem P2 (do 24.01.2027): wyniki prognoz operacyjnych z okresu testów do `docs/P2/04_wyniki.md` i nowe zrzuty dashboardu (4 zakładki) — jako `p2-v1.1`.
 - **Następne: I1 (zbiór uczący inż) na `main`.**
