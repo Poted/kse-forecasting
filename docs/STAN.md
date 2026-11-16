@@ -3,9 +3,33 @@
 Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ## Decyzje potrzebne
-- (brak)
+Przed I5 (system):
+1. **Model celu 1 w systemie:** LightGBM (deterministyczny, bez PyTorch w aplikacji) czy sieć MLP/LSTM (wyniki równorzędne — `docs/etapy/I3.md`; wymaga PyTorch w środowisku aplikacji)?
+2. **Regresja MW w systemie:** wariant bezpośredni (MAE 132 MW ogółem, 535 MW w kwadransach z ograniczeniem) czy dwuetapowy (118 / 563) — `docs/etapy/I2.md`?
+3. **Ceny ujemne w widoku:** prawdopodobieństwo czy flaga przy progu z treningu (próg źle skalibrowany — `docs/etapy/I4.md`)?
+4. **Prognoza inż „na jutro”:** liczona ręcznie (przycisk/CLI) czy także automatycznie w GitHub Actions jak P2 (wtedy osobny workflow z gałęzi `main` i ta sama baza Neon)?
 
 ---
+
+## 2026-11-16 · I4 Cel 2: ujemne ceny RCE — zrobione
+**Zrobione:** `inz/c2.py` (cechy z cen RCE dób już opublikowanych z kontrolą momentu publikacji, model „jak dziś”, LightGBM), `uv run kse-inz c2`, 8 testów; eksperyment (`inz/experiment.py`) obsługuje cel bez regresji. Dokumentacja: `docs/etapy/I4.md`; metryki: `docs/fig/i4_metryki.md`; wykres: `docs/fig/i4_pr_rce_neg.png`.
+
+**Wyniki (prognoza o 12:00 dnia D; test 01.01–15.11.2026, 30 624 kwadranse, cena ujemna w 4,4%):**
+| Model (trening ≤ 2025) | AUC | AP | F1 |
+|---|---|---|---|
+| baseline: kalendarz | 0,882 | 0,259 | 0,347 |
+| baseline: jak dziś | 0,687 | 0,188 | 0,402 |
+| LightGBM | 0,976 | 0,725 | 0,579 |
+
+Wynik nie jest słaby — analiza związku cen z ograniczeniami (warunek awaryjny z planu) nie była potrzebna. Najważniejsze cechy: prognoza P2 (26%), cena z doby D w tym samym kwadransie (22%), wiatr. 6 przebiegów w `model_run`. `pytest` 97 passed + 1 skipped (bez PyTorch), `ruff` bez błędów.
+
+**Problemy:** próg decyzyjny wyznaczony na 2025 (0,007) jest źle skalibrowany dla 2026: czułość 0,88, precyzja 0,43; próg dobrany na teście dałby F1 0,65 (diagnostyka). Metoda wyboru progu zostaje jak w I2 — zmiana po obejrzeniu testu byłaby dopasowaniem do testu. AUC i AP nie zależą od progu.
+
+**Pytania (nieblokujące):**
+- Widok ryzyka cen ujemnych w I5: pokazywać prawdopodobieństwo (bez flagi) czy flagę przy progu z treningu? Propozycja: prawdopodobieństwo.
+- Pytania z I2 i I3 — bez zmian (wariant regresji MW; model dla systemu: LightGBM czy sieć; wyniki z Colaba czy z CPU).
+
+**Następne: I5 (system: widoki dashboardu, testy, podręcznik). Przed I5 potrzebne odpowiedzi na pytania o model dla systemu i wariant regresji — patrz „Decyzje potrzebne”.**
 
 ## 2026-11-16 · I3 Sieci MLP i LSTM — zrobione (przebieg na CPU; notebook Colab do uruchomienia przez użytkownika)
 **Zrobione:** `inz/nn.py` (MLP, LSTM w PyTorch; interfejs jak modele I2), `uv run kse-inz nn` / `nn-import` / `dataset --export`, notebook `inz/notebooks/I3_sieci_colab.ipynb`, 11 testów, grupa zależności `nn` (PyTorch instalowany tylko przez `uv sync --group nn`). Dokumentacja: `docs/etapy/I3.md`; wspólna tabela: `docs/fig/i3_metryki.md`; pliki wynikowe: `results/i3/`.

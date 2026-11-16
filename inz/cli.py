@@ -2,6 +2,7 @@
 
 uv run kse-inz dataset            # zbiór uczący → tabela inz_dataset, statystyki celów, wykresy
 uv run kse-inz c1                 # cel 1: modele bazowe i LightGBM, metryki, zapis przebiegów
+uv run kse-inz c2                 # cel 2: ujemne ceny RCE (prognoza o 12:00 dnia D)
 uv run kse-inz nn                 # cel 1: sieci MLP i LSTM (wymaga: uv sync --group nn)
 uv run kse-inz nn-import KATALOG  # wyniki sieci z plików (np. z Colaba) → baza, tabela metryk
 Opcja --no-save: bez zapisu do bazy.
@@ -27,6 +28,7 @@ LABELS = {
     "baseline_plan": "baseline: reguła z planu PSE",
     "lightgbm": "LightGBM",
     "lightgbm_2etapy": "LightGBM (regresja dwuetapowa)",
+    "baseline_jak_dzis": "baseline: jak dziś (doba D)",
     "mlp": "MLP",
     "lstm": "LSTM",
     "staly": "trening ≤ 2025",
@@ -208,6 +210,97 @@ def run_c1(engine, save: bool) -> None:
     (FIG_DIR / "i2_metryki.md").write_text(c1_markdown(results), encoding="utf-8")
 
 
+C2_COLUMNS = ["AUC", "AP", "F1", "precyzja", "czułość", "próg"]
+
+
+def c2_markdown(res: experiment.Result, oracle_f1: float) -> str:
+    days = res.test["business_date"]
+    m = res.metrics.iloc[0]
+    flag = res.target.flag
+    part = res.predictions[
+        (res.predictions["model"] == "lightgbm") & (res.predictions["schemat"] == "staly")
+    ].merge(res.test[["dtime_utc", flag]], on="dtime_utc")
+    monthly = evaluate.by_month(part.assign(_mw=0.0), flag, "_mw", res.thresholds["lightgbm"])
+    cols = ["n_ogr", "AUC", "AP", "F1"]
+    top = res.fitted["lightgbm"].importance().sort_values("klasyfikator", ascending=False)
+    return "\n".join(
+        [
+            "# I4 — metryki modeli celu 2 (ujemna cena RCE na kwadrans D+1)",
+            "",
+            "Wygenerowano: `uv run kse-inz c2`. Prognoza o 12:00 dnia D. Trening: doby ≤ 2025;"
+            f" test: {days.min():%d.%m.%Y}–{days.max():%d.%m.%Y}.",
+            "Walidacja krocząca: model dla miesiąca M uczony na dobach do 2 dób przed początkiem",
+            "miesiąca (ceny są znane następnego dnia). Próg F1 wyznaczony na okresie treningowym.",
+            "",
+            f"Kwadranse testowe: {_num(m['n'], 'n')}, z ceną ujemną: {_num(m['n_ogr'], 'n')} "
+            f"({m['n_ogr'] / m['n']:.1%}).",
+            "",
+            "## Wszystkie kwadranse",
+            "",
+            *_metric_rows(res.metrics, C2_COLUMNS),
+            "",
+            f"F1 LightGBM (trening ≤ 2025) przy progu dobranym na teście: {oracle_f1:.3f} — tylko",
+            "diagnostyka kalibracji progu, nie wynik modelu.",
+            "",
+            "## Kwadranse z planowaną generacją PV > 0",
+            "",
+            f"Kwadranse: {_num(res.metrics_day.iloc[0]['n'], 'n')}.",
+            "",
+            *_metric_rows(res.metrics_day, ["AUC", "AP", "F1"]),
+            "",
+            "## LightGBM wg miesięcy (trening ≤ 2025)",
+            "",
+            "| miesiąc | kw. z ceną < 0 | AUC | AP | F1 |",
+            "|---|---|---|---|---|",
+            *[
+                f"| {idx} | "
+                + " | ".join(_num(row[c], "n" if c == "n_ogr" else c) for c in cols)
+                + " |"
+                for idx, row in monthly.iterrows()
+            ],
+            "",
+            "## Ważność cech LightGBM (gain)",
+            "",
+            "| cecha | udział |",
+            "|---|---|",
+            *[f"| `{k}` | {v:.1%} |" for k, v in top["klasyfikator"].items()],
+            "",
+        ]
+    )
+
+
+def run_c2(engine, save: bool) -> None:
+    from inz import c2
+    from inz import plots as iplots
+
+    base = dataset.read(engine)
+    if base.empty:
+        raise SystemExit("Brak zbioru uczącego — najpierw: uv run kse-inz dataset")
+    data = c2.add_features(base, c2.load_rce(engine))
+    res = experiment.run(data, c2.TARGET, model_classes=c2.MODELS)
+    log.info("progi %s", {k: round(v, 3) for k, v in res.thresholds.items()})
+    static = res.predictions[res.predictions["schemat"] == "staly"]
+    wide = static.pivot(index="dtime_utc", columns="model", values="p_hat")
+    truth = res.test.set_index("dtime_utc")[res.target.flag].reindex(wide.index)
+    ap = res.metrics.xs("staly", level="schemat")["AP"]
+    names = ["lightgbm", "baseline_kalendarz", "baseline_jak_dzis"]
+    iplots.pr_curves(
+        truth,
+        {f"{LABELS[n]} (AP {ap[n]:.2f})": wide[n] for n in names},
+        "Precyzja–czułość, ujemna cena RCE, test 2026",
+        FIG_DIR / "i4_pr_rce_neg.png",
+    )
+    best = evaluate.best_f1_threshold(truth.to_numpy(), wide["lightgbm"].to_numpy())
+    zeros = truth * 0.0
+    oracle = evaluate.metrics(truth, zeros, wide["lightgbm"], zeros, best)["F1"]
+    (FIG_DIR / "i4_metryki.md").write_text(c2_markdown(res, oracle), encoding="utf-8")
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    res.fitted["lightgbm"].clf_.booster_.save_model(str(MODEL_DIR / "inz_c2_rce_neg_clf.txt"))
+    if save:
+        log.info("Zapisane przebiegi: %s", experiment.save(engine, res))
+    print(f"\n{res.target.label}\n{res.metrics[C2_COLUMNS].round(3).to_string()}")
+
+
 NN_PREFIX = "i3"
 MODEL_ORDER = ["baseline_kalendarz", "baseline_plan", "lightgbm", "lightgbm_2etapy", "mlp", "lstm"]
 
@@ -339,6 +432,7 @@ def main(argv: list[str] | None = None) -> None:
         "--export", type=Path, help="zapisz zbiór także do pliku parquet (dla Colaba)"
     )
     p_c1 = sub.add_parser("c1", help="cel 1: modele bazowe i LightGBM (I2)")
+    p_c2 = sub.add_parser("c2", help="cel 2: ujemne ceny RCE (I4)")
     p_nn = sub.add_parser("nn", help="cel 1: sieci MLP i LSTM (I3)")
     p_nn.add_argument("--data", type=Path, help="zbiór z pliku parquet zamiast z bazy")
     p_nn.add_argument("--out-dir", type=Path, default=PROJECT_ROOT / "results" / "i3")
@@ -349,7 +443,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     for p in (p_nn, p_imp):
         p.add_argument("--target", choices=list(models.TARGETS), default="balance")
-    for p in (p_ds, p_c1, p_nn):
+    for p in (p_ds, p_c1, p_c2, p_nn):
         p.add_argument("--no-save", action="store_true", help="bez zapisu do bazy")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -359,6 +453,8 @@ def main(argv: list[str] | None = None) -> None:
         run_dataset(_engine(), save=not args.no_save, export=args.export)
     elif args.cmd == "c1":
         run_c1(_engine(), save=not args.no_save)
+    elif args.cmd == "c2":
+        run_c2(_engine(), save=not args.no_save)
     elif args.cmd == "nn":
         run_nn(args)
     else:

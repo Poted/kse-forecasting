@@ -35,6 +35,8 @@ SCHEMES = ("staly", "kroczacy")
 def prepare(data: pd.DataFrame, target: models.Target) -> pd.DataFrame:
     """Doby z kompletem celów i planu; cechy pochodne."""
     df = models.add_derived(data)
+    if target.mw not in df:
+        df[target.mw] = 0.0  # cel bez regresji
     ok = df[target.flag].notna() & df["kse_pow_dem"].notna()
     full_days = ok.groupby(df["business_date"]).transform("all")
     df = df[full_days].copy()
@@ -53,8 +55,15 @@ def split(
     return df, train, test
 
 
-def walk_cutoff(block_start: date) -> date:
-    """Ostatnia doba treningowa dla bloku miesiąca M: koniec miesiąca M−2."""
+def walk_cutoff(block_start: date, label_lag: str = "month") -> date:
+    """Ostatnia doba treningowa dla bloku zaczynającego się dobą `block_start`.
+
+    "month": koniec miesiąca M−2 (cel publikowany z opóźnieniem tygodni).
+    "day": `block_start` − 2 doby (cel znany następnego dnia; pierwsza prognoza bloku
+    jest wykonywana w dobie `block_start` − 1, gdy znane są doby do `block_start` − 2).
+    """
+    if label_lag == "day":
+        return block_start - timedelta(days=2)
     first_of_month = block_start.replace(day=1)
     prev_month_first = (first_of_month - timedelta(days=1)).replace(day=1)
     return prev_month_first - timedelta(days=1)
@@ -96,7 +105,7 @@ def run(
         preds.append(_frame(test, static.predict(test), name, "staly"))
         info[name] = []
         for start, end in blocks:
-            cutoff = walk_cutoff(start)
+            cutoff = walk_cutoff(start, target.label_lag)
             part = df[days <= cutoff]
             block = test[(test["business_date"] >= start) & (test["business_date"] <= end)]
             preds.append(_frame(block, cls().fit(part, target).predict(block), name, "kroczacy"))
@@ -165,7 +174,7 @@ def _table(joined: pd.DataFrame, target: models.Target, thresholds: dict) -> pd.
 
 
 def run_name(target: models.Target, model: str, scheme: str) -> str:
-    return f"inz_c1_{target.key}_{model}_{scheme}"
+    return f"inz_{target.goal}_{target.key}_{model}_{scheme}"
 
 
 def save(
@@ -264,10 +273,12 @@ def latest_metrics(
     with engine.connect() as conn:
         if schema:
             conn.execute(sa.text(f'SET search_path TO "{schema}"'))
-        runs = pd.read_sql(sa.text(sql), conn, params={"pattern": f"inz_c1_{target.key}_%"})
+        runs = pd.read_sql(
+            sa.text(sql), conn, params={"pattern": f"inz_{target.goal}_{target.key}_%"}
+        )
     table = pd.DataFrame(list(runs["metrics"]), index=runs["model"])
     table["schemat"] = [p["scheme"] for p in runs["params"]]
-    prefix = f"inz_c1_{target.key}_"
+    prefix = f"inz_{target.goal}_{target.key}_"
     table["model"] = [
         name[len(prefix) : -len(s) - 1]
         for name, s in zip(runs["model"], table["schemat"], strict=True)
