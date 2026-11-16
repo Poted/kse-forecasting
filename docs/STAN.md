@@ -3,13 +3,30 @@
 Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ## Decyzje potrzebne
-Przed I5 (system):
-1. **Model celu 1 w systemie:** LightGBM (deterministyczny, bez PyTorch w aplikacji) czy sieć MLP/LSTM (wyniki równorzędne — `docs/etapy/I3.md`; wymaga PyTorch w środowisku aplikacji)?
-2. **Regresja MW w systemie:** wariant bezpośredni (MAE 132 MW ogółem, 535 MW w kwadransach z ograniczeniem) czy dwuetapowy (118 / 563) — `docs/etapy/I2.md`?
-3. **Ceny ujemne w widoku:** prawdopodobieństwo czy flaga przy progu z treningu (próg źle skalibrowany — `docs/etapy/I4.md`)?
-4. **Prognoza inż „na jutro”:** liczona ręcznie (przycisk/CLI) czy także automatycznie w GitHub Actions jak P2 (wtedy osobny workflow z gałęzi `main` i ta sama baza Neon)?
+- I6 (symulacja magazynu energii — opcja z planu): realizować czy pominąć?
 
 ---
+
+## 2026-11-16 · I5 System — zrobione
+**Decyzje użytkownika (16.11, `00_fundament.md` sekcja 5):** model celu 1 w systemie — LightGBM; regresja MW — wariant dwuetapowy (rekomendacja była warunkowa; przyjęto niższy błąd ogółem — zmiana na bezpośredni to jedna klasa w `inz/forecast.py`); ceny ujemne jako prawdopodobieństwo; prognoza inż także automatycznie.
+
+**Zrobione:** prognoza ryzyka na jutro (`inz/forecast.py`, `uv run kse-inz forecast`, `uv run kse-inz init`); trzy widoki dashboardu („Ryzyko nadpodaży”, „Epizody nadpodaży”, „Porównanie modeli”); workflow `.github/workflows/prognoza-inz.yml` (10:47 i 15:37 UTC, kod z `main`); podręcznik `docs/podrecznik.md`; dokumentacja `docs/etapy/I5.md`; zrzuty `docs/fig/i5_widok_*.png`.
+
+**Wyniki:** prognoza obu celów liczy się w ok. 25 s; dashboard uruchamia się z 7 zakładkami bez wyjątków. `pytest` 104 passed + 1 skipped (bez PyTorch), `ruff` bez błędów.
+
+**Problemy / niesprawdzone z sesji:**
+- Workflow `prognoza-inz.yml` nie był uruchomiony w GitHub Actions (polecenie sprawdzone lokalnie). Korzysta z istniejącego sekretu `DATABASE_URL`.
+- Baza Neon wymaga jednorazowo `uv run kse-inz init` (z laptopa, z `DATABASE_URL` Neon) — bez tego widoki „Epizody” i „Porównanie modeli” będą puste; sama prognoza automatyczna zadziała.
+- Dashboard w Streamlit Cloud działa z gałęzi `p2` — widoki inż będą widoczne w chmurze dopiero po przełączeniu aplikacji na `main` (po oddaniu P2) albo lokalnie.
+- Notebook Colab (I3) — nadal nieuruchomiony w Colabie; instrukcja konfiguracji przekazana użytkownikowi 16.11.
+
+**Do zrobienia przez użytkownika:** (1) `uv run kse-inz init` na bazie Neon; (2) w zakładce Actions uruchomić ręcznie „Prognoza ryzyka nadpodaży (inż)” i sprawdzić wynik; (3) opcjonalnie Colab.
+
+**Pytania (nieblokujące):**
+- NFR-06 („modele sieci wczytywane przez aplikację”) po decyzji o LightGBM nie jest spełnione dosłownie — do aktualizacji w `02_wymagania.md` przez użytkownika.
+- I6 (symulacja magazynu energii) jest opcją „tylko jeśli starczy czasu” — czy ją realizować? Bez decyzji nie zaczynam.
+
+**Następne: I6 tylko po decyzji użytkownika; tekst pracy — w rozmowie w projekcie.**
 
 ## 2026-11-16 · I4 Cel 2: ujemne ceny RCE — zrobione
 **Zrobione:** `inz/c2.py` (cechy z cen RCE dób już opublikowanych z kontrolą momentu publikacji, model „jak dziś”, LightGBM), `uv run kse-inz c2`, 8 testów; eksperyment (`inz/experiment.py`) obsługuje cel bez regresji. Dokumentacja: `docs/etapy/I4.md`; metryki: `docs/fig/i4_metryki.md`; wykres: `docs/fig/i4_pr_rce_neg.png`.

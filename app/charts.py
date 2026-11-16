@@ -16,6 +16,11 @@ TEXT_2 = "#52514e"
 GRID = "#e4e3df"
 
 SERIES_COLOR = {
+    "ograniczenie PV": PALETTE[0],
+    "ujemna cena RCE": PALETTE[1],
+    "prognoza": PALETTE[0],
+    "plan PSE: generacja PV": PALETTE[3],
+    "RCE": PALETTE[2],
     "LightGBM": PALETTE[0],
     "PSE (plan dobowy)": PALETTE[1],
     "naive D−1": PALETTE[2],
@@ -60,6 +65,8 @@ def lines(
     xaxis: str = "",
     colors: dict | None = None,
     markers: bool = False,
+    unit: str = "MW",
+    decimals: int = 0,
 ) -> go.Figure:
     """Wykres liniowy: indeks = oś X, kolumny = serie."""
     colors = colors or {}
@@ -74,10 +81,13 @@ def lines(
                 mode="lines+markers" if markers else "lines",
                 line={"color": color, "width": 2},
                 marker={"size": 8},
-                hovertemplate="%{y:,.0f} MW<extra>" + str(col) + "</extra>",
+                hovertemplate=f"%{{y:,.{decimals}f}} {unit}<extra>{col}</extra>",
             )
         )
-    return _layout(fig, title, xaxis)
+    _layout(fig, title, xaxis, unit)
+    if len(frame) > 48:  # kwadranse doby: etykieta co 2 godziny
+        fig.update_xaxes(tickmode="array", tickvals=list(frame.index[::8]))
+    return fig
 
 
 def forecast_chart(table: pd.DataFrame, title: str) -> go.Figure:

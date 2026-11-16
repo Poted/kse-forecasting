@@ -58,6 +58,8 @@ uv run kse-inz dataset     # inż: zbiór uczący (tabela inz_dataset), statysty
 uv run kse-inz c1          # inż: cel 1 (ograniczenia PV) — modele bazowe i LightGBM, metryki
 uv run kse-inz nn          # inż: cel 1 — sieci MLP i LSTM (wcześniej: uv sync --group nn)
 uv run kse-inz c2          # inż: cel 2 (ujemne ceny RCE, prognoza o 12:00 dnia D)
+uv run kse-inz init        # inż: zbiór, eksperymenty (jeśli brak) i prognoza ryzyka na jutro
+uv run kse-inz forecast    # inż: prognoza ryzyka nadpodaży na jutro (podręcznik: docs/podrecznik.md)
 uv run kse-app             # dashboard Streamlit: http://localhost:8501
 ```
 Szczegóły: `docs/etapy/P2.6.md`.

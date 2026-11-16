@@ -34,6 +34,7 @@ TZ = p2f.TZ
 FIRST_TARGET = date(2024, 9, 27)  # początek danych poze-redoze
 QUARTER = pd.Timedelta(minutes=15)
 P2_MODEL = "lightgbm"
+P2_OPERATIONAL = "lightgbm_operacyjny"
 
 CALENDAR = ["quarter_local", "dow", "month", "doy_sin", "doy_cos", "is_holiday", "is_weekend"]
 PLAN = list(db.INZ_PLAN_COLUMNS)
@@ -185,8 +186,23 @@ _SQL = {
     "plan": "SELECT dtime_utc, business_date, publication_ts_utc, "
     + ", ".join(PLAN)
     + " FROM pse_pdgopkd ORDER BY dtime_utc",
-    "p2_forecast": "SELECT hour_utc, target_date, forecast_moment_utc, net_demand_hat "
-    f"FROM v_p2_forecast_latest WHERE model = '{P2_MODEL}'",
+    # Walidacja krocząca P2 (do ostatniej pełnej doby wykonania); dla dób późniejszych —
+    # prognoza operacyjna P2: ostatnia wykonana w dniu D na dobę D+1.
+    "p2_forecast": f"""
+        SELECT hour_utc, target_date, forecast_moment_utc, net_demand_hat
+        FROM v_p2_forecast_latest WHERE model = '{P2_MODEL}'
+        UNION ALL
+        SELECT f.hour_utc, f.target_date, f.forecast_moment_utc, f.net_demand_hat
+        FROM p2_forecast f
+        JOIN (
+            SELECT DISTINCT ON (f2.target_date) f2.target_date, f2.run_id
+            FROM p2_forecast f2 JOIN model_run r USING (run_id)
+            WHERE r.model = '{P2_OPERATIONAL}' AND f2.forecast_date = f2.target_date - 1
+              AND f2.target_date > COALESCE(
+                  (SELECT max(target_date) FROM v_p2_forecast_latest WHERE model = '{P2_MODEL}'),
+                  DATE '1900-01-01')
+            ORDER BY f2.target_date, f2.run_id DESC
+        ) d ON d.target_date = f.target_date AND d.run_id = f.run_id""",
     "weather": "SELECT time_utc, " + ", ".join(WEATHER) + " FROM v_pogoda_h ORDER BY time_utc",
     "redoze": "SELECT dtime_utc, pv_red_balance, pv_red_network, publication_ts_utc "
     "FROM pse_poze_redoze ORDER BY dtime_utc",
@@ -224,6 +240,16 @@ def save(engine: Engine, data: pd.DataFrame, schema: str | None = None) -> int:
         # limit PostgreSQL: 65 535 parametrów na zapytanie (wiersze × kolumny)
         batch = 65_535 // len(db.inz_dataset.columns)
         return db.upsert(conn, db.inz_dataset, data, batch=batch)
+
+
+def save_recent(engine: Engine, data: pd.DataFrame, since: date, schema: str | None = None) -> int:
+    """Aktualizuje (upsert) tylko doby ≥ `since` — codzienne odświeżenie bez pełnej budowy."""
+    part = data[data["business_date"] >= since]
+    with engine.begin() as conn:
+        if schema:
+            conn.execute(sa.text(f'SET search_path TO "{schema}"'))
+        batch = 65_535 // len(db.inz_dataset.columns)
+        return db.upsert(conn, db.inz_dataset, part, batch=batch)
 
 
 def read(engine: Engine, schema: str | None = None) -> pd.DataFrame:

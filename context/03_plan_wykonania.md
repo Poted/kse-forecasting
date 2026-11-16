@@ -74,6 +74,6 @@ Inż uczy się na danych o ograniczeniach od 27.09.2024. Wybrany wariant: P2 gen
 | I2 | zrobione (16.11.2026) | — |
 | I3 | zrobione (16.11.2026) — przebieg na CPU; notebook Colab do uruchomienia przez użytkownika | — |
 | I4 | zrobione (16.11.2026) | — |
-| I5 | nierozpoczęty | model celu 1 w systemie, wariant regresji, sposób prezentacji cen ujemnych, uruchamianie prognozy (`docs/STAN.md`) |
-| I6 | nierozpoczęty | — |
+| I5 | zrobione (16.11.2026) | — (decyzje 16.11: LightGBM, regresja dwuetapowa, ceny jako prawdopodobieństwo, prognoza automatyczna) |
+| I6 | nierozpoczęty (opcja) | realizować czy pominąć (`docs/STAN.md`) |
 | Tekst inż | nierozpoczęty (prowadzony w rozmowie w projekcie) | — |
