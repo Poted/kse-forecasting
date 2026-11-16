@@ -17,6 +17,7 @@ from sklearn.isotonic import IsotonicRegression
 from inz import dataset
 
 SEED = 42
+NO_REGRESSION = "_zero"
 
 
 @dataclass(frozen=True)
@@ -24,7 +25,9 @@ class Target:
     key: str
     label: str
     flag: str
-    mw: str
+    mw: str  # kolumna wielkości [MW]; "_zero" = cel bez regresji (tylko klasyfikacja)
+    goal: str = "c1"  # przedrostek nazw przebiegów: inz_<goal>_<key>_<model>_<schemat>
+    label_lag: str = "month"  # opóźnienie publikacji celu: "month" (poze-redoze) albo "day"
 
 
 TARGETS = {
@@ -130,30 +133,34 @@ class LightGBMModel:
     """Klasyfikator (ograniczenie jest/nie ma) i regresor (MW, wszystkie kwadranse)."""
 
     name = "lightgbm"
-    params = {"lgbm": LGBM_PARAMS, "features": FEATURES}
+    features = FEATURES
+
+    @property
+    def params(self) -> dict:
+        return {"lgbm": LGBM_PARAMS, "features": self.features}
 
     def fit(self, train: pd.DataFrame, target: Target) -> LightGBMModel:
-        x = train[FEATURES]
+        x = train[self.features]
         self.clf_ = lgb.LGBMClassifier(objective="binary", **LGBM_PARAMS).fit(
             x, train[target.flag].astype(int)
         )
-        self.reg_ = lgb.LGBMRegressor(objective="regression", **LGBM_PARAMS).fit(
-            x, train[target.mw]
-        )
+        self.reg_ = None
+        if target.mw != NO_REGRESSION:
+            self.reg_ = lgb.LGBMRegressor(objective="regression", **LGBM_PARAMS).fit(
+                x, train[target.mw]
+            )
         return self
 
     def predict(self, frame: pd.DataFrame) -> pd.DataFrame:
-        x = frame[FEATURES]
-        return _output(frame, self.clf_.predict_proba(x)[:, 1], self.reg_.predict(x))
+        x = frame[self.features]
+        mw = self.reg_.predict(x) if self.reg_ is not None else np.zeros(len(frame))
+        return _output(frame, self.clf_.predict_proba(x)[:, 1], mw)
 
     def importance(self) -> pd.DataFrame:
-        return pd.DataFrame(
-            {
-                "klasyfikator": self.clf_.booster_.feature_importance("gain"),
-                "regresor": self.reg_.booster_.feature_importance("gain"),
-            },
-            index=FEATURES,
-        ).pipe(lambda d: d / d.sum())
+        table = {"klasyfikator": self.clf_.booster_.feature_importance("gain")}
+        if self.reg_ is not None:
+            table["regresor"] = self.reg_.booster_.feature_importance("gain")
+        return pd.DataFrame(table, index=self.features).pipe(lambda d: d / d.sum())
 
 
 class LightGBMTwoStage(LightGBMModel):
@@ -161,7 +168,10 @@ class LightGBMTwoStage(LightGBMModel):
     tylko na kwadransach z ograniczeniem). Klasyfikator jak w `LightGBMModel`."""
 
     name = "lightgbm_2etapy"
-    params = {"lgbm": LGBM_PARAMS, "features": FEATURES, "regression": "p_hat × E[MW | ogr.]"}
+
+    @property
+    def params(self) -> dict:
+        return {**super().params, "regression": "p_hat × E[MW | ogr.]"}
 
     def fit(self, train: pd.DataFrame, target: Target) -> LightGBMTwoStage:
         self.clf_ = lgb.LGBMClassifier(objective="binary", **LGBM_PARAMS).fit(
