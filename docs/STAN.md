@@ -7,6 +7,28 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-16 · I2 Cel 1: modele bazowe i LightGBM — zrobione
+**Zrobione:** `inz/models.py` (6 cech pochodnych z planu PSE; baseline kalendarzowy; reguła z planu PSE; LightGBM — klasyfikator i regresor; wariant dwuetapowy regresji), `inz/evaluate.py`, `inz/experiment.py` (trening ≤ 2025 / test 2026 oraz walidacja krocząca), `uv run kse-inz c1`, tabela `inz_prediction`, 12 testów. Dokumentacja: `docs/etapy/I2.md`; metryki: `docs/fig/i2_metryki.md`; wykresy: `docs/fig/i2_*.png`.
+
+**Wyniki (test 01.01–15.11.2026, 30 624 kwadranse; ograniczenie bilansowe w 17,5%):**
+| Model (trening ≤ 2025) | AUC | AP | F1 | MAE [MW] |
+|---|---|---|---|---|
+| baseline: kalendarz | 0,938 | 0,722 | 0,735 | 147 |
+| baseline: reguła z planu PSE | 0,967 | 0,846 | 0,777 | 140 |
+| LightGBM | 0,976 | 0,882 | 0,808 | 132 (dwuetapowo: 118) |
+
+Walidacja krocząca (douczanie co miesiąc): LightGBM AUC 0,977, AP 0,886, F1 0,823, MAE 121 MW. MAE prognozy zerowej 165 MW. Ograniczenia sieciowe: nieprzewidywalne z tych cech (LightGBM AP 0,03 przy częstości 0,01; MAE każdego modelu wyższy niż prognozy zerowej). 16 przebiegów w `model_run`, prognozy w `inz_prediction`. Wyniki powtarzalne. `pytest` 89 passed, `ruff` bez błędów.
+
+**Ustalenia techniczne (do wglądu):** próg F1 wyznaczany na okresie treningowym (prognozy krzyżowe); w walidacji kroczącej model dla miesiąca M uczony do końca miesiąca M−2 (opóźnienie publikacji `poze-redoze`); hiperparametry LightGBM stałe, jak w P2.5.
+
+**Problemy:** brak.
+
+**Pytania (nieblokujące):**
+- Regresja MW w systemie (I5): wariant bezpośredni (MAE 132 MW ogółem, 535 MW w kwadransach z ograniczeniem) czy dwuetapowy (118 / 563)? Do I5 w tabelach zostają oba.
+- Cel sieciowy: zostaje w tabelach jako wynik negatywny; czy sieci (I3) mają być uczone także dla niego, czy tylko dla celu bilansowego? Bez decyzji I3 obejmie tylko cel bilansowy — do potwierdzenia przed I3.
+
+**Następne: I3 (sieci MLP/LSTM, Colab) — wymaga udziału użytkownika (uruchomienie notebooka w Colabie).**
+
 ## 2026-11-16 · I1 Zbiór uczący inż — zrobione
 **Zrobione:** `inz/dataset.py` (cechy z kontrolą momentu dostępności, cele), `inz/stats.py`, polecenie `uv run kse-inz dataset`, tabela `inz_dataset` w bazie, 14 testów (`tests/test_inz_dataset.py`), ERD zaktualizowany. Dokumentacja: `docs/etapy/I1.md`; statystyki: `docs/fig/i1_statystyki.md`; wykresy: `docs/fig/i1_cele_*.png`.
 

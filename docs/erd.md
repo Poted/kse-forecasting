@@ -99,6 +99,13 @@ erDiagram
         float8 lat
         float8 lon
     }
+    inz_prediction {
+        int4 run_id PK,FK
+        timestamptz dtime_utc PK
+        date business_date
+        float8 p_hat
+        float8 mw_hat
+    }
     p2_forecast {
         int4 run_id PK,FK
         timestamptz hour_utc PK
@@ -115,6 +122,7 @@ erDiagram
         float8 temperature_2m
         float8 wind_speed_100m
     }
+    model_run ||--o{ inz_prediction : "run_id"
     model_run ||--o{ p2_forecast : "run_id"
     weather_point ||--o{ weather_forecast : "point_id"
 ```

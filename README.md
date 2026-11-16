@@ -55,6 +55,7 @@ Szczegóły: `docs/etapy/P2.5.md`.
 ```bash
 uv run kse-p2 forecast     # pobranie najnowszych danych, trening, prognoza netto na jutro
 uv run kse-inz dataset     # inż: zbiór uczący (tabela inz_dataset), statystyki celów
+uv run kse-inz c1          # inż: cel 1 (ograniczenia PV) — modele bazowe i LightGBM, metryki
 uv run kse-app             # dashboard Streamlit: http://localhost:8501
 ```
 Szczegóły: `docs/etapy/P2.6.md`.
