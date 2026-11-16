@@ -1,6 +1,8 @@
 # Codzienna prognoza zapotrzebowania netto na jutro (decyzja 15.11.2026).
 # Odświeża dane PSE i pogodę, uczy model na dobach do D−1, zapisuje prognozę w bazie (Neon).
 # Wymaga sekretu repozytorium DATABASE_URL (Settings → Secrets and variables → Actions).
+# Kod prognozy pobierany z gałęzi `p2` (wersja P2), niezależnie od prac nad inż na `main`.
+# GitHub uruchamia harmonogram z gałęzi domyślnej — dlatego ten plik jest także na `main`.
 name: Prognoza na jutro
 
 on:
@@ -22,6 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: p2
           fetch-depth: 1
       - uses: actions/setup-python@v5
         with:

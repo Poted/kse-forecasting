@@ -7,6 +7,13 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-16 · Gałęzie `p2` i `main`
+**Decyzja użytkownika (16.11, `00_fundament.md` sekcja 5; `CLAUDE.md` sekcja „Gałęzie”):** `p2` — utrzymanie P2 i tagi `p2-v1.x`; `main` — praca inżynierska; poprawki tylko w kierunku `p2` → `main`.
+
+**Zrobione:** gałąź `p2` z `main` (074b09e); codzienna prognoza w GitHub Actions pobiera kod z `p2` (`actions/checkout` z `ref: p2`), więc zmiany inż w kodzie wspólnym (`common/`, `app/`) nie wpływają na prognozy P2; opis w `docs/srodowisko.md` (rozdz. 4b).
+
+**Do zrobienia przez użytkownika:** dashboard na Streamlit Cloud przełączyć na gałąź `p2`; akceptacja tagu `p2-v1.0`.
+
 ## 2026-11-16 · P2.7 — aktualizacja dokumentacji
 **Zrobione:** `docs/P2/` uzupełnione o zmiany po 14.11: wersja w chmurze (Streamlit Community Cloud + Neon, diagram wdrożenia), codzienna prognoza w GitHub Actions, `kse-init`, zakładka „Historia prognoz” i widok `v_p2_operational_eval`, liczby testów (63). 5 diagramów Mermaid sprawdzonych rendererem.
 

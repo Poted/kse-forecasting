@@ -86,6 +86,16 @@ Koszt (dokumentacja GitHub, 13.11.2026): prywatne repozytorium w planie Free ma 
 
 **Porównanie z wykonaniem** odbywa się w bazie: zakładka „Historia prognoz” zestawia każdą prognozę z dnia D z wykonaniem doby D+1 (gdy PSE je opublikuje, ok. 00:00–02:00) i z planem PSE, także według wersji kodu.
 
+## 4b. Gałęzie: P2 i praca inżynierska
+| Gałąź | Zawartość | Co z niej działa |
+|---|---|---|
+| `p2` | tylko poprawki P2; tagi `p2-v1.0`, `p2-v1.1`, … = zamrożone wersje do oddania | codzienna prognoza (GitHub Actions pobiera kod z `p2`), dashboard na Streamlit Cloud |
+| `main` | praca inżynierska; zawiera też wszystkie poprawki z `p2` | rozwój i testy inż |
+
+Poprawka P2: commit na `p2` → `git merge p2` do `main`. Kod inż nigdy nie trafia do `p2`.
+
+**Dashboard na gałęzi `p2`:** w Streamlit Cloud aplikacja musi wskazywać gałąź `p2` (Manage app / ustawienia aplikacji; jeśli zmiana gałęzi nie jest dostępna — usuń aplikację i utwórz ją ponownie z gałęzią `p2`, plikiem `app/dashboard.py`, Python 3.12 i tym samym sekretem `DATABASE_URL`; dane w Neon zostają).
+
 ## 5. Praca nad kodem z telefonu (np. na wakacjach)
 1. **Claude Code** (aplikacja Claude, sesja w repozytorium `Poted/kse-forecasting`): „kontynuuj” — realizacja kolejnych etapów według `CLAUDE.md`; zmiany trafiają do PR.
 2. **GitHub** (aplikacja): przegląd PR, dokumentacji (`docs/`, diagramy i wykresy wyświetlają się), scalenie do `main`.

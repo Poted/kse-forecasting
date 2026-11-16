@@ -23,6 +23,8 @@ Na początku każdej sesji:
 Wyjątek: tag `p2-v1.0` (koniec P2) — tylko po akceptacji użytkownika.
 
 ## Gałęzie
+**Od 16.11.2026 (decyzja użytkownika):** `p2` — tylko poprawki P2, na niej tagi `p2-v1.x`; `main` — praca inżynierska. Poprawka P2: commit na `p2`, potem `git merge p2` do `main` (nigdy `main` → `p2`). Nowy tag P2 tylko po akceptacji użytkownika. Pozostałe zasady poniżej dotyczą sytuacji, gdy środowisko nie pozwala pushować na `main`/`p2`.
+
 - Jeśli możesz pushować na `main` — pracuj na `main`.
 - Jeśli środowisko pozwala tylko na gałąź sesji (`claude/...`):
   - Start: `git fetch origin`; sprawdź otwarte PR-y do `main` (`gh api repos/Poted/kse-forecasting/pulls`). Jeśli jest niescalony PR z poprzedniej sesji — zacznij od jego gałęzi (scal ją do swojej gałęzi sesji). Inaczej zacznij od `origin/main`.
