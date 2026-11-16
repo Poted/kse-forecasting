@@ -12,6 +12,9 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 - Sesja Claude Code nie może tworzyć tagów (proxy git i API odrzuca zapis tagów) — **tag zakłada użytkownik** (GitHub → Releases → nowy tag `p2-v1.0`, cel: gałąź `p2`). Kolejne sesje: tagi zawsze przez użytkownika.
 - Dalsze poprawki P2 z testów: commit na `p2` → merge do `main`; kolejne tagi `p2-v1.1`, … po akceptacji.
 - Przed oddaniem P2 (do 24.01.2027): wyniki prognoz operacyjnych z okresu testów do `docs/P2/04_wyniki.md` i nowe zrzuty dashboardu (4 zakładki) — jako `p2-v1.1`.
+- Tag `p2-v1.0` założony przez użytkownika (GitHub Release, 16.11).
+- Dashboard na Streamlit Community Cloud: aplikacja z gałęzi `p2` (stara aplikacja z `main` do usunięcia — limit 1 prywatnej aplikacji). Prace inż na `main` nie mają podglądu w chmurze do czasu oddania P2; weryfikacja inż: testy i zrzuty ekranu w raportach etapów.
+- Testy P2 przez użytkownika trwają; zgłoszenia „poprawka P2: …” → commit na `p2`, merge do `main`, po akceptacji tag `p2-v1.x`.
 - **Następne: I1 (zbiór uczący inż) na `main`.**
 
 ## 2026-11-16 · Gałęzie `p2` i `main`
