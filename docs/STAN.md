@@ -3,9 +3,15 @@
 Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ## Decyzje potrzebne
-- **Tag `p2-v1.0`** (koniec P2): wymaga akceptacji użytkownika (`CLAUDE.md`) i scalenia PR #3 do `main`. Proponowana kolejność: przegląd i testy użytkownika → scalenie PR #3 → tag na `main`.
+- (brak)
 
 ---
+
+## 2026-11-16 · Koniec P2: tag `p2-v1.0`
+- Tag `p2-v1.0` na gałęzi `p2` (akceptacja użytkownika 16.11). P2.7 — zrobione.
+- Dalsze poprawki P2 z testów: commit na `p2` → merge do `main`; kolejne tagi `p2-v1.1`, … po akceptacji.
+- Przed oddaniem P2 (do 24.01.2027): wyniki prognoz operacyjnych z okresu testów do `docs/P2/04_wyniki.md` i nowe zrzuty dashboardu (4 zakładki) — jako `p2-v1.1`.
+- **Następne: I1 (zbiór uczący inż) na `main`.**
 
 ## 2026-11-16 · Gałęzie `p2` i `main`
 **Decyzja użytkownika (16.11, `00_fundament.md` sekcja 5; `CLAUDE.md` sekcja „Gałęzie”):** `p2` — utrzymanie P2 i tagi `p2-v1.x`; `main` — praca inżynierska; poprawki tylko w kierunku `p2` → `main`.
