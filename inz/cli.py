@@ -2,6 +2,8 @@
 
 uv run kse-inz dataset            # zbiór uczący → tabela inz_dataset, statystyki celów, wykresy
 uv run kse-inz c1                 # cel 1: modele bazowe i LightGBM, metryki, zapis przebiegów
+uv run kse-inz nn                 # cel 1: sieci MLP i LSTM (wymaga: uv sync --group nn)
+uv run kse-inz nn-import KATALOG  # wyniki sieci z plików (np. z Colaba) → baza, tabela metryk
 Opcja --no-save: bez zapisu do bazy.
 """
 
@@ -25,6 +27,8 @@ LABELS = {
     "baseline_plan": "baseline: reguła z planu PSE",
     "lightgbm": "LightGBM",
     "lightgbm_2etapy": "LightGBM (regresja dwuetapowa)",
+    "mlp": "MLP",
+    "lstm": "LSTM",
     "staly": "trening ≤ 2025",
     "kroczacy": "krocząca",
 }
@@ -32,7 +36,7 @@ COLUMNS = ["AUC", "AP", "F1", "precyzja", "czułość", "próg", "MAE", "MAE_ogr
 EXAMPLE_WEEK = ("2026-06-08", "2026-06-14")
 
 
-def run_dataset(engine, save: bool) -> None:
+def run_dataset(engine, save: bool, export: Path | None = None) -> None:
     inputs = dataset.load_inputs(engine)
     if inputs["p2_forecast"].empty:
         raise SystemExit("Brak historycznych prognoz P2 — najpierw: uv run kse-p2 backtest")
@@ -45,6 +49,10 @@ def run_dataset(engine, save: bool) -> None:
     )
     if save:
         log.info("Zapisano %d wierszy do inz_dataset", dataset.save(engine, data))
+    if export:
+        export.parent.mkdir(parents=True, exist_ok=True)
+        data.to_parquet(export, index=False)
+        log.info("Zbiór zapisany w pliku %s", export)
     tables = stats.target_stats(data)
     (FIG_DIR / "i1_statystyki.md").write_text(stats.to_markdown(tables), encoding="utf-8")
     stats.make_figures(tables, FIG_DIR)
@@ -121,7 +129,12 @@ def c1_markdown(results: list[experiment.Result]) -> str:
             f"| {idx} | " + " | ".join(_num(row[c], c) for c in cols) + " |"
             for idx, row in monthly.iterrows()
         ]
-        top = res.importance.sort_values("klasyfikator", ascending=False).head(12)
+        top = (
+            res.fitted["lightgbm"]
+            .importance()
+            .sort_values("klasyfikator", ascending=False)
+            .head(12)
+        )
         lines += [
             "",
             "### Ważność cech LightGBM (gain, 12 najważniejszych dla klasyfikatora)",
@@ -183,34 +196,173 @@ def run_c1(engine, save: bool) -> None:
         log.info("%s: progi %s", target.label, {k: round(v, 3) for k, v in res.thresholds.items()})
         c1_figures(res, FIG_DIR)
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
-        res.final_model.clf_.booster_.save_model(str(MODEL_DIR / f"inz_c1_{target.key}_clf.txt"))
-        res.final_model.reg_.booster_.save_model(str(MODEL_DIR / f"inz_c1_{target.key}_reg.txt"))
+        res.fitted["lightgbm"].clf_.booster_.save_model(
+            str(MODEL_DIR / f"inz_c1_{target.key}_clf.txt")
+        )
+        res.fitted["lightgbm"].reg_.booster_.save_model(
+            str(MODEL_DIR / f"inz_c1_{target.key}_reg.txt")
+        )
         if save:
             log.info("Zapisane przebiegi: %s", experiment.save(engine, res))
         print(f"\n{target.label}\n{res.metrics[COLUMNS].round(3).to_string()}")
     (FIG_DIR / "i2_metryki.md").write_text(c1_markdown(results), encoding="utf-8")
 
 
+NN_PREFIX = "i3"
+MODEL_ORDER = ["baseline_kalendarz", "baseline_plan", "lightgbm", "lightgbm_2etapy", "mlp", "lstm"]
+
+
+def seed_spread(data: pd.DataFrame, target, thresholds: dict, n_seeds: int) -> list[dict]:
+    """Rozrzut metryk sieci dla kolejnych ziaren losowych (trening ≤ 2025, test 2026)."""
+    from inz import nn
+
+    _, train, test = experiment.split(data, target)
+    rows = []
+    for cls in nn.MODELS:
+        for seed in range(models.SEED, models.SEED + n_seeds):
+            out = cls(seed=seed).fit(train, target).predict(test)
+            m = evaluate.metrics(
+                test[target.flag],
+                test[target.mw],
+                out["p_hat"],
+                out["mw_hat"],
+                thresholds[cls.name],
+            )
+            rows.append(
+                {"model": cls.name, "seed": seed, **{k: m[k] for k in ("AUC", "AP", "F1", "MAE")}}
+            )
+            log.info("%s, ziarno %d: AP %.3f, MAE %.1f", cls.name, seed, m["AP"], m["MAE"])
+    return rows
+
+
+def i3_markdown(table: pd.DataFrame, target, payload: dict) -> str:
+    order = {name: i for i, name in enumerate(MODEL_ORDER)}
+    table = table.loc[
+        sorted(table.index, key=lambda k: (experiment.SCHEMES.index(k[1]), order.get(k[0], 99)))
+    ]
+    lines = [
+        "# I3 — metryki modeli celu 1: modele bazowe, LightGBM, MLP, LSTM",
+        "",
+        "Wygenerowano: `uv run kse-inz nn` albo `uv run kse-inz nn-import`. Wiersze modeli",
+        "bazowych i LightGBM: ostatnie przebiegi `uv run kse-inz c1`. Cel: " + target.label + ".",
+        "Trening: doby ≤ 31.12.2025; test: 2026. Opis kolumn: `docs/fig/i2_metryki.md`.",
+        f"Sieci: wersja kodu `{payload.get('code_version')}`,"
+        f" urządzenie `{payload.get('device')}`.",
+        "",
+        *_metric_rows(table, COLUMNS),
+        "",
+    ]
+    seeds = pd.DataFrame(payload.get("seeds") or [])
+    if not seeds.empty:
+        lines += [
+            f"## Rozrzut wyników sieci: {seeds['seed'].nunique()} ziaren losowych (trening ≤ 2025)",
+            "",
+            "| model | metryka | średnia | odch. std. | min | maks |",
+            "|---|---|---|---|---|---|",
+        ]
+        for name, group in seeds.groupby("model", sort=False):
+            for col in ("AUC", "AP", "F1", "MAE"):
+                v = group[col]
+                cells = " | ".join(_num(x, col) for x in (v.mean(), v.std(), v.min(), v.max()))
+                lines.append(f"| {LABELS[name]} | {col} | {cells} |")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _publish_nn(engine, res: experiment.Result, payload: dict) -> None:
+    """Zapis przebiegów sieci w bazie i wspólna tabela metryk (I2 + sieci)."""
+    run_ids = experiment.save(engine, res, version=payload.get("code_version"))
+    log.info("Zapisane przebiegi: %s", run_ids)
+    table = experiment.latest_metrics(engine, res.target)
+    (FIG_DIR / "i3_metryki.md").write_text(
+        i3_markdown(table, res.target, payload), encoding="utf-8"
+    )
+    print(table[COLUMNS].round(3).to_string())
+
+
+def run_nn(args) -> None:
+    try:
+        import torch
+    except ModuleNotFoundError:
+        raise SystemExit("Brak PyTorch — zainstaluj: uv sync --group nn") from None
+
+    from inz import nn
+
+    target = models.TARGETS[args.target]
+    engine = None
+    if args.data:
+        data = pd.read_parquet(args.data)
+        data["dtime_utc"] = pd.to_datetime(data["dtime_utc"], utc=True)
+        data["business_date"] = pd.to_datetime(data["business_date"]).dt.date
+    else:
+        engine = _engine()
+        data = dataset.read(engine)
+    if data.empty:
+        raise SystemExit("Brak zbioru uczącego — najpierw: uv run kse-inz dataset")
+    res = experiment.run(data, target, model_classes=nn.MODELS)
+    print(f"\n{target.label}\n{res.metrics[COLUMNS].round(3).to_string()}")
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    for name, model in res.fitted.items():
+        path = MODEL_DIR / f"inz_c1_{target.key}_{name}.pt"
+        torch.save(model.state(), path)
+        log.info("Model %s: %s (epoki: %d)", name, path, model.epochs_)
+    extra = {
+        "device": str(next(iter(res.fitted.values())).device),
+        "torch": torch.__version__,
+        "epochs": {name: model.epochs_ for name, model in res.fitted.items()},
+        "seeds": seed_spread(data, target, res.thresholds, args.seeds) if args.seeds else [],
+    }
+    experiment.dump(res, args.out_dir, NN_PREFIX, extra)
+    log.info("Pliki wynikowe: %s", args.out_dir)
+    if engine is not None and not args.no_save:
+        _, payload = experiment.load(args.out_dir, NN_PREFIX, target)
+        _publish_nn(engine, res, payload)
+
+
+def run_nn_import(args) -> None:
+    target = models.TARGETS[args.target]
+    res, payload = experiment.load(args.dir, NN_PREFIX, target)
+    _publish_nn(_engine(), res, payload)
+
+
+def _engine():
+    engine = db.make_engine(load_settings().database_url)
+    db.init_schema(engine)
+    return engine
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="kse-inz", description="Praca inżynierska")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    for name, text in (
-        ("dataset", "zbuduj zbiór uczący (I1)"),
-        ("c1", "cel 1: modele bazowe i LightGBM (I2)"),
-    ):
-        sub.add_parser(name, help=text).add_argument(
-            "--no-save", action="store_true", help="bez zapisu do bazy"
-        )
+    p_ds = sub.add_parser("dataset", help="zbuduj zbiór uczący (I1)")
+    p_ds.add_argument(
+        "--export", type=Path, help="zapisz zbiór także do pliku parquet (dla Colaba)"
+    )
+    p_c1 = sub.add_parser("c1", help="cel 1: modele bazowe i LightGBM (I2)")
+    p_nn = sub.add_parser("nn", help="cel 1: sieci MLP i LSTM (I3)")
+    p_nn.add_argument("--data", type=Path, help="zbiór z pliku parquet zamiast z bazy")
+    p_nn.add_argument("--out-dir", type=Path, default=PROJECT_ROOT / "results" / "i3")
+    p_nn.add_argument("--seeds", type=int, default=0, help="rozrzut wyników dla N ziaren")
+    p_imp = sub.add_parser("nn-import", help="wyniki sieci z plików → baza i tabela metryk")
+    p_imp.add_argument(
+        "dir", type=Path, help="katalog z plikami i3_*_wynik.json i *_prognozy.parquet"
+    )
+    for p in (p_nn, p_imp):
+        p.add_argument("--target", choices=list(models.TARGETS), default="balance")
+    for p in (p_ds, p_c1, p_nn):
+        p.add_argument("--no-save", action="store_true", help="bez zapisu do bazy")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-
-    engine = db.make_engine(load_settings().database_url)
-    db.init_schema(engine)
     FIG_DIR.mkdir(parents=True, exist_ok=True)
+
     if args.cmd == "dataset":
-        run_dataset(engine, save=not args.no_save)
+        run_dataset(_engine(), save=not args.no_save, export=args.export)
+    elif args.cmd == "c1":
+        run_c1(_engine(), save=not args.no_save)
+    elif args.cmd == "nn":
+        run_nn(args)
     else:
-        run_c1(engine, save=not args.no_save)
+        run_nn_import(args)
 
 
 if __name__ == "__main__":

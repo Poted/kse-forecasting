@@ -33,6 +33,11 @@ dev = [
     "pytest",
     "ruff",
 ]
+# Sieci neuronowe (I3): instalowane tylko na żądanie — `uv sync --group nn`.
+# W Colabie PyTorch jest w środowisku; aplikacja i testy bez tej grupy działają bez PyTorch.
+nn = [
+    "torch>=2.4",
+]
 
 [build-system]
 requires = ["hatchling"]

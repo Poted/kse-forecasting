@@ -7,6 +7,31 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-16 · I3 Sieci MLP i LSTM — zrobione (przebieg na CPU; notebook Colab do uruchomienia przez użytkownika)
+**Zrobione:** `inz/nn.py` (MLP, LSTM w PyTorch; interfejs jak modele I2), `uv run kse-inz nn` / `nn-import` / `dataset --export`, notebook `inz/notebooks/I3_sieci_colab.ipynb`, 11 testów, grupa zależności `nn` (PyTorch instalowany tylko przez `uv sync --group nn`). Dokumentacja: `docs/etapy/I3.md`; wspólna tabela: `docs/fig/i3_metryki.md`; pliki wynikowe: `results/i3/`.
+
+**Wyniki (ograniczenie bilansowe, test 01.01–15.11.2026, trening ≤ 2025):**
+| Model | AUC | AP | F1 | MAE [MW] |
+|---|---|---|---|---|
+| LightGBM | 0,976 | 0,882 | 0,808 | 132 (dwuetapowo: 118) |
+| MLP (ziarno 42) | 0,979 | 0,901 | 0,817 | 114 |
+| LSTM (ziarno 42) | 0,980 | 0,900 | 0,823 | 125 |
+
+Rozrzut dla 5 ziaren: AP MLP 0,893 ± 0,014, LSTM 0,892 ± 0,014 — różnica względem LightGBM mieści się w rozrzucie. W walidacji kroczącej AP trzech modeli 0,880–0,889. LSTM nie jest lepszy od MLP. Sieć uczy się na CPU 5–10 s; cały eksperyment 4,5 min. `pytest` 100 passed (z PyTorch) / 89 passed, 1 skipped (bez), `ruff` bez błędów.
+
+**Problemy:**
+- Notebook Colab **nie był uruchomiony w Colabie** (brak dostępu z sesji); polecenia, które wywołuje, są sprawdzone lokalnie. Kroki specyficzne dla Colaba (Secrets, Dysk, PostgreSQL w Colabie) do sprawdzenia przy pierwszym uruchomieniu.
+- `download.pytorch.org` jest poza listą dozwolonych hostów sesji — PyTorch zainstalowany z PyPI (wersja z bibliotekami GPU, ok. 5 GB); nie wpływa na wyniki.
+
+**Do zrobienia przez użytkownika (opcjonalnie):** uruchomić notebook w Colabie; pliki z `kse-forecasting/results/i3/` na Dysku przenieść do repozytorium i wykonać `uv run kse-inz nn-import results/i3`. Wymaganie NFR-06 mówi o treningu w Colabie — obecne liczby pochodzą z CPU sesji.
+
+**Pytania (nieblokujące):**
+- Czy wyniki z Colaba mają zastąpić wyniki z CPU w dokumentacji, czy wystarczy przebieg na CPU (sieci uczą się w sekundach, GPU nie jest potrzebne)? Jeśli wystarczy CPU — do aktualizacji NFR-06 i `03_plan_wykonania.md` przez użytkownika.
+- Model dla systemu (I5): LightGBM (deterministyczny, bez PyTorch w aplikacji) czy sieć? Wyniki są równorzędne. Wczytanie sieci przez aplikację wymaga PyTorch w środowisku aplikacji. Do rozstrzygnięcia przed I5.
+- Pytania z I2 (wariant regresji; cel sieciowy) — bez zmian. I3 objął tylko cel bilansowy.
+
+**Następne: I4 (cel 2: ceny ujemne).**
+
 ## 2026-11-16 · I2 Cel 1: modele bazowe i LightGBM — zrobione
 **Zrobione:** `inz/models.py` (6 cech pochodnych z planu PSE; baseline kalendarzowy; reguła z planu PSE; LightGBM — klasyfikator i regresor; wariant dwuetapowy regresji), `inz/evaluate.py`, `inz/experiment.py` (trening ≤ 2025 / test 2026 oraz walidacja krocząca), `uv run kse-inz c1`, tabela `inz_prediction`, 12 testów. Dokumentacja: `docs/etapy/I2.md`; metryki: `docs/fig/i2_metryki.md`; wykresy: `docs/fig/i2_*.png`.
 
