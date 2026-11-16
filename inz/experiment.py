@@ -269,13 +269,16 @@ def latest_metrics(
     """Metryki ostatniego przebiegu każdego modelu celu (wiersz: nazwa przebiegu)."""
     sql = """
         SELECT DISTINCT ON (model) model, run_id, metrics, params
-        FROM model_run WHERE model LIKE :pattern ORDER BY model, run_id DESC"""
+        FROM model_run WHERE model LIKE :pattern AND jsonb_typeof(metrics) = 'object'
+        ORDER BY model, run_id DESC"""
     with engine.connect() as conn:
         if schema:
             conn.execute(sa.text(f'SET search_path TO "{schema}"'))
         runs = pd.read_sql(
             sa.text(sql), conn, params={"pattern": f"inz_{target.goal}_{target.key}_%"}
         )
+    if runs.empty:
+        return pd.DataFrame()
     table = pd.DataFrame(list(runs["metrics"]), index=runs["model"])
     table["schemat"] = [p["scheme"] for p in runs["params"]]
     prefix = f"inz_{target.goal}_{target.key}_"

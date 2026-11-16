@@ -141,6 +141,10 @@ Wyniki sprawdzenia danych (1.11.2026): ograniczenia PV w 444 z 765 dni, 12 480 k
 | 15.11 | Środowisko testów: laptop z Windows (Docker Desktop); dashboard do przeglądania z telefonu na Streamlit Community Cloud z bazą Neon (PostgreSQL w chmurze); praca nad kodem z telefonu w sesjach Claude Code. Odrzucone: dashboard w sesjach Claude (zużycie tokenów, limit 2 h), Netlify (nie uruchamia aplikacji Streamlit) |
 | 15.11 | Prognoza na jutro uruchamiana także automatycznie: codziennie przez GitHub Actions (ok. 12:00), zapis w bazie Neon; przycisk w dashboardzie i CLI zostają. Porównanie prognoz operacyjnych z wykonaniem i PSE zapisywane w bazie i pokazywane w dashboardzie (zakładka „Historia prognoz”, z podziałem na wersje kodu). Zmienia decyzję z 08.11 (tylko ręcznie) |
 | 16.11 | Gałęzie: `p2` — utrzymanie P2 (tylko poprawki P2; tagi `p2-v1.x` = zamrożone wersje do oddania); `main` — praca inżynierska. Poprawki z `p2` przenoszone do `main`, nigdy odwrotnie. Codzienna prognoza P2 (GitHub Actions) i dashboard na Streamlit Cloud działają z gałęzi `p2` |
+| 16.11 | System inż (I5): model celu 1 — LightGBM (wyniki równorzędne z sieciami, deterministyczny, bez PyTorch w aplikacji); sieci MLP/LSTM zostają w porównaniu modeli |
+| 16.11 | System inż (I5): regresja MW — wariant dwuetapowy LightGBM (prawdopodobieństwo × wielkość warunkowa; niższy MAE ogółem: 118 wobec 132 MW) |
+| 16.11 | System inż (I5): ceny ujemne prezentowane jako prawdopodobieństwo, bez flagi (próg z treningu źle skalibrowany dla 2026) |
+| 16.11 | System inż (I5): prognoza inż na jutro uruchamiana także automatycznie w GitHub Actions, jak P2; przycisk w dashboardzie i CLI zostają |
 
 ## 6. Pytania otwarte
 - Dokładna data oddania pracy inżynierskiej; zasady uczelni dot. AI; wymagany szablon pracy.

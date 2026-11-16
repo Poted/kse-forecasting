@@ -121,8 +121,21 @@ def test_dashboard_starts():
         "Historia prognoz",
         "Jakość prognoz",
         "Analiza",
+        "Ryzyko nadpodaży",
+        "Epizody nadpodaży",
+        "Porównanie modeli",
     ]
-    assert at.button[0].label == "Przelicz prognozę na jutro"
+    assert [b.label for b in at.button] == [
+        "Przelicz prognozę na jutro",
+        "Przelicz prognozę ryzyka",
+    ]
+
+
+def test_lines_unit_in_hover_and_axis():
+    fig = charts.lines(pd.DataFrame({"ograniczenie PV": [10.0, 55.5]}), "t", unit="%")
+    assert fig.data[0].hovertemplate.startswith("%{y:,.0f} %")
+    assert fig.layout.yaxis.title.text == "%"
+    assert fig.data[0].line.color == charts.SERIES_COLOR["ograniczenie PV"]
 
 
 def test_bootstrap_detects_raw_data(tmp_path):

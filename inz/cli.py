@@ -3,6 +3,8 @@
 uv run kse-inz dataset            # zbiór uczący → tabela inz_dataset, statystyki celów, wykresy
 uv run kse-inz c1                 # cel 1: modele bazowe i LightGBM, metryki, zapis przebiegów
 uv run kse-inz c2                 # cel 2: ujemne ceny RCE (prognoza o 12:00 dnia D)
+uv run kse-inz forecast           # prognoza ryzyka nadpodaży na jutro (FR-15)
+uv run kse-inz init               # zbiór + eksperymenty (jeśli brak w bazie) + prognoza
 uv run kse-inz nn                 # cel 1: sieci MLP i LSTM (wymaga: uv sync --group nn)
 uv run kse-inz nn-import KATALOG  # wyniki sieci z plików (np. z Colaba) → baza, tabela metryk
 Opcja --no-save: bez zapisu do bazy.
@@ -418,6 +420,50 @@ def run_nn_import(args) -> None:
     _publish_nn(_engine(), res, payload)
 
 
+def run_forecast(engine, update: bool, force: bool) -> None:
+    from inz import forecast
+
+    res = forecast.run(engine, update=update, force=force)
+    print(f"Prognoza z {res.forecast_date} na {res.target_date}; przebiegi: {res.run_ids or '—'}")
+    for goal, fc in res.goals.items():
+        print(
+            f"  {goal}: maks. prawdopodobieństwo {fc.table['p_hat'].max():.2f}, "
+            f"maks. {fc.table['mw_hat'].max():.0f} MW, trening do {fc.train_to}"
+        )
+    for w in res.warnings:
+        print("UWAGA:", w)
+
+
+def has_runs(engine, name: str) -> bool:
+    import sqlalchemy as sa
+
+    with engine.connect() as conn:
+        n = conn.execute(
+            sa.select(sa.func.count()).select_from(db.model_run).where(db.model_run.c.model == name)
+        ).scalar_one()
+    return n > 0
+
+
+def run_init(engine, update: bool) -> None:
+    """Doprowadza część inż do stanu gotowego: zbiór, eksperymenty (jeśli brak), prognoza."""
+    import sqlalchemy as sa
+
+    from inz import c2
+
+    with engine.connect() as conn:
+        rows = conn.execute(sa.select(sa.func.count()).select_from(db.inz_dataset)).scalar_one()
+    if rows == 0:
+        log.info("Budowa zbioru uczącego (ok. 1 min)")
+        run_dataset(engine, save=True)
+    if not has_runs(engine, experiment.run_name(models.TARGETS["balance"], "lightgbm", "staly")):
+        log.info("Eksperyment celu 1 (ok. 4 min)")
+        run_c1(engine, save=True)
+    if not has_runs(engine, experiment.run_name(c2.TARGET, "lightgbm", "staly")):
+        log.info("Eksperyment celu 2 (ok. 1 min)")
+        run_c2(engine, save=True)
+    run_forecast(engine, update=update, force=False)
+
+
 def _engine():
     engine = db.make_engine(load_settings().database_url)
     db.init_schema(engine)
@@ -433,6 +479,11 @@ def main(argv: list[str] | None = None) -> None:
     )
     p_c1 = sub.add_parser("c1", help="cel 1: modele bazowe i LightGBM (I2)")
     p_c2 = sub.add_parser("c2", help="cel 2: ujemne ceny RCE (I4)")
+    p_fc = sub.add_parser("forecast", help="prognoza ryzyka nadpodaży na jutro (FR-15)")
+    p_fc.add_argument("--force", action="store_true", help="przelicz, nawet jeśli jest w bazie")
+    p_init = sub.add_parser("init", help="zbiór, eksperymenty (jeśli brak) i prognoza")
+    for p in (p_fc, p_init):
+        p.add_argument("--no-update", action="store_true", help="bez pobierania nowych danych")
     p_nn = sub.add_parser("nn", help="cel 1: sieci MLP i LSTM (I3)")
     p_nn.add_argument("--data", type=Path, help="zbiór z pliku parquet zamiast z bazy")
     p_nn.add_argument("--out-dir", type=Path, default=PROJECT_ROOT / "results" / "i3")
@@ -447,12 +498,17 @@ def main(argv: list[str] | None = None) -> None:
         p.add_argument("--no-save", action="store_true", help="bez zapisu do bazy")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     FIG_DIR.mkdir(parents=True, exist_ok=True)
 
     if args.cmd == "dataset":
         run_dataset(_engine(), save=not args.no_save, export=args.export)
     elif args.cmd == "c1":
         run_c1(_engine(), save=not args.no_save)
+    elif args.cmd == "forecast":
+        run_forecast(_engine(), update=not args.no_update, force=args.force)
+    elif args.cmd == "init":
+        run_init(_engine(), update=not args.no_update)
     elif args.cmd == "c2":
         run_c2(_engine(), save=not args.no_save)
     elif args.cmd == "nn":
