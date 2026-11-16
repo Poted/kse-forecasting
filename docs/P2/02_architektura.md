@@ -23,7 +23,9 @@ flowchart LR
     end
     subgraph app[Pakiet app]
         DASH[dashboard.py<br/>Streamlit]
+        INIT[bootstrap.py<br/>kse-init]
     end
+    GHA[GitHub Actions<br/>codziennie 10:17 UTC]
     RAW[(data/raw<br/>Parquet)]
     PG[(PostgreSQL)]
     MOD[(models/<br/>model LightGBM)]
@@ -42,13 +44,18 @@ flowchart LR
     DASH --> PG
     DASH --> FC
     DASH --> AN
+    INIT --> CLI1
+    INIT --> BT
+    INIT --> FC
+    DASH --> INIT
+    GHA --> FC
 ```
 
 | Pakiet | Moduły | Odpowiedzialność |
 |---|---|---|
 | `common` | `pse.py`, `openmeteo.py`, `http.py`, `storage.py`, `db.py`, `completeness.py`, `config.py`, `cli.py` | pobieranie danych z API (paginacja, ponawianie), zapis surowy, baza danych, kontrola jakości danych, konfiguracja |
 | `p2` | `features.py`, `backtest.py`, `forecast.py`, `metrics.py`, `analysis.py`, `plots.py`, `cli.py` | cechy, modele, walidacja, prognoza na jutro, metryki, analiza |
-| `app` | `dashboard.py`, `data.py`, `charts.py`, `run.py` | interfejs użytkownika |
+| `app` | `dashboard.py`, `data.py`, `charts.py`, `run.py`, `bootstrap.py` | interfejs użytkownika; `kse-init` — przygotowanie systemu jednym poleceniem (dane, baza, walidacja, prognoza) |
 | `inz` | — | miejsce na pracę inżynierską (poza zakresem P2) |
 
 Logika znajduje się w plikach `.py`; notebook `p2/notebooks/P2.4_analiza.ipynb` tylko uruchamia funkcje analizy.
@@ -59,8 +66,11 @@ Logika znajduje się w plikach `.py`; notebook `p2/notebooks/P2.4_analiza.ipynb`
 3. **Ładowanie** (`kse-data load`): upsert do tabel PostgreSQL; zgodność liczby wierszy (`kse-data db-check`).
 4. **Agregacja**: widoki godzinowe w bazie (średnie z czterech kwadransów), w tym zmienna docelowa `net_demand = demand − pv`.
 5. **Modelowanie** (`kse-p2 backtest`): cechy → modele → walidacja krocząca → metryki; przebiegi i prognozy historyczne zapisane w bazie.
-6. **Prognoza na jutro** (`kse-p2 forecast` albo przycisk w dashboardzie): odświeżenie danych, trening, prognoza D+1, zapis.
-7. **Prezentacja** (`kse-app`): dashboard czyta widoki i prognozy z bazy.
+6. **Prognoza na jutro** (`kse-p2 forecast`: codziennie automatycznie w GitHub Actions, a także przycisk w dashboardzie): odświeżenie danych, trening, prognoza D+1, zapis.
+7. **Ocena bieżąca:** widok `v_p2_operational_eval` zestawia prognozę z dnia D z wykonaniem doby D+1 (gdy PSE je opublikuje) i z planem PSE.
+8. **Prezentacja** (`kse-app`): dashboard czyta widoki i prognozy z bazy.
+
+Polecenie `kse-init` wykonuje kroki 1–6 w jednym przebiegu (pierwsze uruchomienie: pełne pobranie i ładowanie; kolejne: ostatnie 10 dób).
 
 ## 2.3 Moment prognozy i dostępność informacji
 Prognoza jest wykonywana w dniu **D o 12:00** czasu lokalnego na doby **D+1**. Model korzysta tylko z informacji dostępnych w tym momencie — brak przecieku informacji jest sprawdzany testem automatycznym (rozdz. 6).
@@ -101,4 +111,21 @@ flowchart LR
     APP -->|HTTPS| EXT[API PSE, Open-Meteo]
 ```
 
-Konfiguracja: plik `.env` (wzór `.env.example`) — dane logowania do bazy, `DATABASE_URL`, porty. Brak logowania użytkowników (decyzja z 01.11).
+**Wersja w chmurze** (od 15.11.2026):
+```mermaid
+flowchart LR
+    T[Telefon / przeglądarka] -->|https://…streamlit.app| SC
+    subgraph cloud[Usługi w chmurze]
+        SC[Streamlit Community Cloud<br/>dashboard z gałęzi main]
+        NE[(Neon<br/>PostgreSQL)]
+        GA[GitHub Actions<br/>prognoza codziennie]
+    end
+    GH[GitHub<br/>repozytorium] -->|wdrożenie po zmianie main| SC
+    GH --> GA
+    SC -->|DATABASE_URL| NE
+    GA -->|DATABASE_URL| NE
+    SC -->|HTTPS| EXT[API PSE, Open-Meteo]
+    GA -->|HTTPS| EXT
+```
+
+Konfiguracja: lokalnie plik `.env` (wzór `.env.example`) — dane logowania do bazy, `DATABASE_URL`, porty; w chmurze `DATABASE_URL` jako sekret w Streamlit Cloud i w GitHub (Actions). Przy pustej bazie dashboard pokazuje przycisk „Załaduj dane” (`kse-init`). Brak logowania użytkowników w aplikacji (decyzja z 01.11); dostęp do aplikacji w chmurze ogranicza Streamlit (prywatna aplikacja z prywatnego repozytorium). Szczegóły: `docs/srodowisko.md`.

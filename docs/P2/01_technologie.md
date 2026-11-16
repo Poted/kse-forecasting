@@ -1,6 +1,6 @@
 # 1. Technologie
 
-Wersje według `uv.lock` i środowiska uruchomieniowego (14.11.2026).
+Wersje według `uv.lock` i środowiska uruchomieniowego (16.11.2026).
 
 ## Środowisko
 | Technologia | Wersja | Zastosowanie |
@@ -10,6 +10,9 @@ Wersje według `uv.lock` i środowiska uruchomieniowego (14.11.2026).
 | PostgreSQL | 16 (obraz `postgres:16`) | baza danych |
 | Docker, Docker Compose | — | uruchomienie bazy i aplikacji jednym poleceniem |
 | Git, GitHub | — | repozytorium kodu i dokumentacji |
+| GitHub Actions | — | codzienna prognoza automatyczna (`.github/workflows/prognoza-dzienna.yml`) |
+| Streamlit Community Cloud | — | hosting dashboardu (wdrożenie z gałęzi `main`) |
+| Neon | PostgreSQL w chmurze | baza danych wersji w chmurze (plan Free) |
 
 ## Biblioteki
 | Biblioteka | Wersja | Zastosowanie |
@@ -45,3 +48,5 @@ Wersje według `uv.lock` i środowiska uruchomieniowego (14.11.2026).
 | Streamlit + Plotly | dashboard w Pythonie, bez osobnego frontendu; interaktywne wykresy |
 | uv + `uv.lock` | jedno polecenie instalacji, identyczne wersje w każdym środowisku |
 | Docker Compose | wymaganie niefunkcjonalne NFR-04: baza i aplikacja jednym poleceniem |
+| Streamlit Community Cloud + Neon | dashboard dostępny z telefonu pod stałym adresem, bez własnego serwera; obie usługi w planach bezpłatnych wystarczają (zużycie: pamięć do 296 MB, baza ok. 110 MB) |
+| GitHub Actions | harmonogram (cron) bez własnego serwera; Streamlit Cloud nie ma harmonogramu zadań |

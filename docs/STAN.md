@@ -7,6 +7,11 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-16 · P2.7 — aktualizacja dokumentacji
+**Zrobione:** `docs/P2/` uzupełnione o zmiany po 14.11: wersja w chmurze (Streamlit Community Cloud + Neon, diagram wdrożenia), codzienna prognoza w GitHub Actions, `kse-init`, zakładka „Historia prognoz” i widok `v_p2_operational_eval`, liczby testów (63). 5 diagramów Mermaid sprawdzonych rendererem.
+
+**Do zrobienia przed tagiem `p2-v1.0`:** testy użytkownika (ok. tydzień); dopisanie wyników prognoz operacyjnych z okresu testów do `docs/P2/04_wyniki.md`; nowe zrzuty dashboardu (4 zakładki; obecne `docs/fig/p2_6_widok_*.png` pokazują 3).
+
 ## 2026-11-15 · Historia prognoz i prognoza automatyczna
 **Decyzja użytkownika (15.11, `00_fundament.md` sekcja 5):** prognoza na jutro także automatycznie (GitHub Actions, codziennie ok. 12:00); porównanie prognoz z wykonaniem zapisywane i pokazywane w dashboardzie.
 

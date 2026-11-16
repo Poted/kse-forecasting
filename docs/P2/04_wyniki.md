@@ -64,7 +64,9 @@ Wykresy: `docs/fig/p2_5_mae_miesiace.png`, `docs/fig/p2_5_mae_godziny.png`, `doc
 - Cecha „szacunek PV” (stosunek PV do prognozowanego promieniowania z ostatnich 7 dób × promieniowanie godziny docelowej) zmniejszyła MAE z 819 do 797 MW i systematyczne przeszacowanie w 2026 r. z +226 do +91 MW — odzwierciedla wzrost mocy zainstalowanej PV.
 
 ## 4.5 Aplikacja
-Dashboard (`docs/fig/p2_6_widok_*.png`) prezentuje prognozę na jutro z prognozą PSE, jakość prognoz w wybranym okresie i analizę profili. Prognoza na jutro jest liczona z aktualnych danych w ok. 40 s (pobranie, trening, prognoza).
+Dashboard (`docs/fig/p2_6_widok_*.png`) prezentuje prognozę na jutro z prognozą PSE, historię prognoz (porównanie z wykonaniem), jakość prognoz w wybranym okresie i analizę profili. Prognoza na jutro jest liczona z aktualnych danych w ok. 40 s (pobranie, trening, prognoza); w chmurze codziennie automatycznie.
+
+**Prognozy operacyjne (bieżące):** od 15.11.2026 prognoza na jutro jest zapisywana codziennie, a po publikacji wykonania porównywana z nim i z planem PSE (zakładka „Historia prognoz”, także wg wersji kodu). Wyniki z okresu testów zostaną dopisane przed tagiem `p2-v1.0`.
 
 ## 4.6 Ograniczenia
 - Dane PSE są w wersji po korektach; w chwili prognozy dostępna była wersja pierwotna.

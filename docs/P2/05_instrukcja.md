@@ -14,23 +14,20 @@ docker compose up -d --build    # baza (db) + dashboard (app)
 ```
 Dashboard: http://localhost:8501. Zatrzymanie: `docker compose down` (dane w bazie zostają).
 
-**Pierwsze uruchomienie — dane i modele** (jednorazowo, ok. 5 min):
+**Pierwsze uruchomienie — dane i modele** (jednorazowo, ok. 6–8 min):
 ```bash
-docker compose exec app uv run --no-sync kse-data pse        # raporty PSE od 14.06.2024
-docker compose exec app uv run --no-sync kse-data weather    # pogoda od 13.06.2024
-docker compose exec app uv run --no-sync kse-data load       # ładowanie do bazy
-docker compose exec app uv run --no-sync kse-p2 backtest     # walidacja, prognozy historyczne
-docker compose exec app uv run --no-sync kse-p2 forecast     # prognoza na jutro
+docker compose exec app uv run --no-sync kse-init
 ```
+`kse-init` pobiera dane, ładuje bazę, wykonuje walidację kroczącą i prognozę na jutro; kolejne uruchomienia odświeżają ostatnie 10 dób. Alternatywnie w dashboardzie: przy pustej bazie przycisk „Załaduj dane”.
+
+**Wersja w chmurze** (Streamlit Community Cloud + Neon, codzienna prognoza w GitHub Actions): kroki wdrożenia w `docs/srodowisko.md`.
 
 ## 5.3 Uruchomienie lokalne (bez kontenera aplikacji)
 ```bash
 uv sync
 cp .env.example .env
 docker compose up -d db
-uv run kse-data pse && uv run kse-data weather && uv run kse-data load
-uv run kse-p2 backtest
-uv run kse-p2 forecast
+uv run kse-init                 # dane, baza, walidacja, prognoza na jutro
 uv run kse-app                  # http://localhost:8501
 ```
 
@@ -45,20 +42,23 @@ uv run kse-app                  # http://localhost:8501
 | `kse-data erd [--out plik.md]` | diagram ERD ze schematu |
 | `kse-p2 backtest [--no-save]` | walidacja krocząca, metryki (`docs/fig/p2_5_metryki.md`), wykresy, zapis prognoz |
 | `kse-p2 forecast [--no-update]` | prognoza netto na jutro (z odświeżeniem danych albo bez) |
+| `kse-init [--skip-download]` | przygotowanie systemu jednym poleceniem: dane, ładowanie, walidacja (gdy brak), prognoza na jutro |
 | `kse-app` | dashboard |
 | `python -m p2.analysis` | wykresy i tabele analizy (`docs/fig/p2_4_*`) |
 
 ## 5.5 Obsługa dashboardu
 **Prognoza na jutro.** Przycisk „Przelicz prognozę na jutro” pobiera najnowsze dane, uczy model i zapisuje prognozę (ok. 1 min). Widok pokazuje dobę prognozy, średnią, minimum i maksimum, wykres godzinowy z prognozą PSE (po jej publikacji ok. 16:00) i — gdy doba minie — wykonanie. Ostrzeżenia pojawiają się, gdy wykonanie za poprzednią dobę jest niekompletne albo brakuje danych pogodowych. Tabela godzinowa jest w rozwijanej sekcji.
 
+**Historia prognoz.** Dla każdej doby: ostatnia prognoza wykonana dzień wcześniej porównana z wykonaniem i z planem PSE — liczba porównanych dób, średni MAE, wykres dziennego MAE, podsumowanie wg wersji kodu, tabela dzienna. Doba pojawia się po publikacji pełnego wykonania (ok. 00:00–02:00 następnego dnia).
+
 **Jakość prognoz.** Wybór okresu (doby docelowe) przeliczająca tabelę metryk (MAE, RMSE, MAPE, bias, błąd w szczycie i w minimum południowym) dla modeli bazowych, LightGBM i PSE. Suwak wybiera tydzień do porównania prognozy z wykonaniem. Wykresy MAE wg godziny i wg miesiąca.
 
 **Analiza.** Profil dobowy netto wg pory roku, krzywa kaczki (czerwiec w kolejnych latach), dobowe minimum południowe i maksimum wieczorne, średnie miesięczne.
 
-Wykresy są interaktywne: najechanie pokazuje wartości, kliknięcie w legendę ukrywa serię. Panel boczny zawiera źródła danych i licencje.
+Wykresy: najechanie albo dotknięcie pokazuje wartości, kliknięcie w legendę ukrywa serię; przybliżanie jest wyłączone (na telefonie blokowało przewijanie). Panel boczny zawiera źródła danych i licencje.
 
 ## 5.6 Codzienna praca
-Prognoza na jutro jest uruchamiana ręcznie (przycisk albo `kse-p2 forecast`) — zgodnie z założeniem w dniu D około 12:00. Dane PSE za dobę D−1 są publikowane ok. 00:00–02:00 dnia D.
+W wersji w chmurze prognoza na jutro liczy się automatycznie codziennie o 10:17 UTC (GitHub Actions); lokalnie — przycisk albo `kse-p2 forecast`, w dniu D około 12:00. Dane PSE za dobę D−1 są publikowane ok. 00:00–02:00 dnia D. Model korzysta tylko z informacji dostępnych o 12:00 dnia D, więc godzina uruchomienia nie wpływa na wynik.
 
 ## 5.7 Rozwiązywanie problemów
 | Objaw | Przyczyna / działanie |
@@ -68,3 +68,5 @@ Prognoza na jutro jest uruchamiana ręcznie (przycisk albo `kse-p2 forecast`) �
 | Dashboard: „Brak prognozy” | uruchom przycisk przeliczenia albo `kse-p2 forecast` |
 | Dashboard: „Brak prognoz historycznych” | uruchom `kse-p2 backtest` |
 | Ostrzeżenie o niekompletnym wykonaniu za D−1 | PSE nie opublikował jeszcze pełnej doby — przelicz później |
+| Dashboard: „Baza danych jest pusta” | nowa baza (np. w chmurze) — przycisk „Załaduj dane” albo `kse-init` |
+| Streamlit Cloud: błąd po aktualizacji kodu | Manage app → Reboot app |

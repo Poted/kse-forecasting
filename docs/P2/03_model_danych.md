@@ -96,7 +96,7 @@ Tabele `pse_*` nie mają kluczy obcych — łączy je czas (`dtime_utc`, koniec 
 | `weather_point` | `point_id` | 8 punktów pogodowych (Warszawa, Kraków, Wrocław, Poznań, Gdańsk, Rzeszów, Białystok, Szczecin) | 8 |
 | `weather_forecast` | `point_id`, `time_utc` | prognoza pogody wydana 48 h przed godziną docelową | 169 728 |
 | `model_run` | `run_id` | rejestr przebiegów modeli (FR-06): model, wersja kodu, parametry i cechy, okna treningowe, metryki | — |
-| `p2_forecast` | `run_id`, `hour_utc` | prognozy netto na D+1 (FR-09): z walidacji kroczącej i prognozy operacyjne | — |
+| `p2_forecast` | `run_id`, `hour_utc` | prognozy netto na D+1 (FR-09): z walidacji kroczącej (`naive_d1`, `naive_week`, `lightgbm`) i prognozy operacyjne (`lightgbm_operacyjny`, codziennie) | — |
 
 Czas: wszystkie znaczniki w UTC (`timestamptz`); `dtime_utc` to koniec 15-minutowego interwału. Kolumny z danymi lokalnymi (`dtime`, `period`) i kolumny puste w raportach PSE nie są ładowane.
 
@@ -110,5 +110,6 @@ Czas: wszystkie znaczniki w UTC (`timestamptz`); `dtime_utc` to koniec 15-minuto
 | `v_rce_h` | RCE godzinowo: średnia i minimum |
 | `v_pogoda_h` | pogoda: średnia z 8 punktów dla każdej godziny |
 | `v_p2_forecast_latest` | prognozy z ostatniego przebiegu każdego modelu |
+| `v_p2_operational_eval` | prognozy operacyjne (`lightgbm_operacyjny`): dla każdej doby D+1 ostatnia prognoza wykonana w dniu D, z wykonaniem i planem PSE — podstawa zakładki „Historia prognoz” |
 
 Godzina = przedział [h, h+1) w UTC; kwadrans o końcu `dtime_utc` należy do godziny `date_trunc('hour', dtime_utc − 15 min)`. Średnie godzinowe z widoku zgadzają się z wartościami z analizy wstępnej (`docs/etapy/P2.3.md`).
