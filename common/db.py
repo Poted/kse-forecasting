@@ -164,6 +164,22 @@ inz_dataset = sa.Table(
     comment="Zbiór uczący inż: cechy dostępne w chwili prognozy i cele na kwadrans D+1 (I1)",
 )
 
+inz_prediction = sa.Table(
+    "inz_prediction",
+    metadata,
+    sa.Column(
+        "run_id",
+        sa.Integer,
+        sa.ForeignKey("model_run.run_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    _ts("dtime_utc", primary_key=True, comment="koniec interwału 15 min, UTC"),
+    sa.Column("business_date", sa.Date, nullable=False, index=True, comment="doba docelowa D+1"),
+    sa.Column("p_hat", sa.Float, comment="prawdopodobieństwo zdarzenia"),
+    sa.Column("mw_hat", sa.Float, comment="prognoza wielkości [MW]"),
+    comment="Prognozy modeli inż na kwadrans D+1 (cel i model: model_run.model, params)",
+)
+
 PSE_TABLES: dict[str, sa.Table] = {
     "his-wlk-cal": his_wlk_cal,
     "pdgopkd": pdgopkd,
