@@ -125,6 +125,45 @@ p2_forecast = sa.Table(
     comment="Prognozy zapotrzebowania netto P2 na D+1 (historyczne z walidacji kroczącej, FR-09)",
 )
 
+# Zbiór uczący inż (I1). Kolumny cech pogrupowane wg momentu dostępności (inz/dataset.py).
+INZ_PLAN_COLUMNS = (
+    "kse_pow_dem",
+    "gen_fv",
+    "gen_wi",
+    "rez_under",
+    "rez_over_demand",
+    "dom_balance_exchange_par",
+    "dom_balance_exchange_non_par",
+    "gen_jgw_jgm_jgz_jga",
+    "ogr_mwe",
+)
+inz_dataset = sa.Table(
+    "inz_dataset",
+    metadata,
+    _ts("dtime_utc", primary_key=True, comment="koniec interwału 15 min, UTC"),
+    sa.Column("business_date", sa.Date, nullable=False, index=True, comment="doba docelowa D+1"),
+    sa.Column("quarter_local", sa.SmallInteger, nullable=False, comment="kwadrans doby 0–95"),
+    sa.Column("dow", sa.SmallInteger, nullable=False),
+    sa.Column("month", sa.SmallInteger, nullable=False),
+    sa.Column("doy_sin", sa.Float, nullable=False),
+    sa.Column("doy_cos", sa.Float, nullable=False),
+    sa.Column("is_holiday", sa.SmallInteger, nullable=False),
+    sa.Column("is_weekend", sa.SmallInteger, nullable=False),
+    *_mw(*INZ_PLAN_COLUMNS),
+    _ts("plan_publication_ts_utc", comment="publikacja planu PSE użytego w cechach"),
+    sa.Column("p2_net_demand_hat", sa.Float, comment="prognoza P2 netto godziny kwadransu [MW]"),
+    *[sa.Column(v, sa.Float) for v in openmeteo.VARIABLES],
+    sa.Column("pv_red_balance_mw", sa.Float, comment="cel: ograniczenie bilansowe PV [MW ≥ 0]"),
+    sa.Column("pv_red_network_mw", sa.Float, comment="cel: ograniczenie sieciowe PV [MW ≥ 0]"),
+    sa.Column("y_red_balance", sa.SmallInteger, comment="cel: ograniczenie bilansowe (0/1)"),
+    sa.Column("y_red_network", sa.SmallInteger, comment="cel: ograniczenie sieciowe (0/1)"),
+    sa.Column("red_pv0_anomaly", sa.SmallInteger, comment="ograniczenie przy pv = 0 (wyzerowane)"),
+    _ts("red_publication_ts_utc", comment="publikacja rekordu poze-redoze"),
+    sa.Column("rce_pln", sa.Float, comment="RCE [zł/MWh]"),
+    sa.Column("y_rce_neg", sa.SmallInteger, comment="cel: rce_pln < 0 (0/1)"),
+    comment="Zbiór uczący inż: cechy dostępne w chwili prognozy i cele na kwadrans D+1 (I1)",
+)
+
 PSE_TABLES: dict[str, sa.Table] = {
     "his-wlk-cal": his_wlk_cal,
     "pdgopkd": pdgopkd,
