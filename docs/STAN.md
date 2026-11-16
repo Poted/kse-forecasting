@@ -7,6 +7,21 @@ Raporty z wykonania zadań. Najnowszy wpis na górze.
 
 ---
 
+## 2026-11-16 · I1 Zbiór uczący inż — zrobione
+**Zrobione:** `inz/dataset.py` (cechy z kontrolą momentu dostępności, cele), `inz/stats.py`, polecenie `uv run kse-inz dataset`, tabela `inz_dataset` w bazie, 14 testów (`tests/test_inz_dataset.py`), ERD zaktualizowany. Dokumentacja: `docs/etapy/I1.md`; statystyki: `docs/fig/i1_statystyki.md`; wykresy: `docs/fig/i1_cele_*.png`.
+
+**Wyniki:** 75 076 kwadransów, 782 doby (27.09.2024–17.11.2026). Ograniczenie bilansowe PV w 12,88% kwadransów (9 652; trening ≤ 2025: 4 278, test 2026: 5 374), sieciowe w 4,55% (3 410; mediana 12 MW wobec 787 MW dla bilansowych), RCE < 0 w 3,95% (2 969). P(RCE < 0) przy ograniczeniu bilansowym 0,26, bez ograniczeń 0,006. Reguła czyszczenia: 102 kwadranse z ograniczeniem przy `pv = 0` wyzerowane. Plan PSE każdej doby opublikowany przed jej początkiem (min. 3,5 h). `pytest` 77 passed, `ruff` bez błędów.
+
+**Ustalenia techniczne (do wglądu):** cele ograniczeń określone tylko dla kwadransów z wykonaniem KSE (raport `poze-redoze` ma puste wiersze dla dób przyszłych); cel 2 (12:00 dnia D) nie korzysta z planu PSE na D+1 (`FEATURES_C2`); pogoda dla obu celów `_previous_day2`.
+
+**Problemy:** brak. Środowisko sesji: nowy kontener — dane pobrane ponownie z API, `kse-p2 backtest` odtworzony (MAE LightGBM 798 MW).
+
+**Pytania (nieblokujące):**
+- `poze-redoze`: dla dób od 09.2026 75% kwadransów z ograniczeniem ma znacznik publikacji z tej samej doby (ok. 11:30 UTC), wcześniej 89% miało znacznik późniejszy niż 7 dni po dobie (korekty). Nie wiadomo, czy wartości z ostatnich tygodni są ostateczne. Czy w I2 okres testowy ma kończyć się z marginesem (np. bez ostatnich tygodni)? Bez decyzji I2 użyje wszystkich dób z celami i opisze to jako ograniczenie.
+- `00_fundament.md` sekcja 3 podaje dla `poze-redoze` „mediana ok. 3 tygodnie po dobie → nie jako cecha” — zasada zostaje bez zmian; powyższy fakt do ewentualnej aktualizacji opisu przez użytkownika.
+
+**Następne: I2 (cel 1: baseline’y + LightGBM).**
+
 ## 2026-11-16 · Koniec P2: tag `p2-v1.0`
 - Tag `p2-v1.0` na gałęzi `p2` (akceptacja użytkownika 16.11), commit `4acbb31`. P2.7 — zrobione.
 - Sesja Claude Code nie może tworzyć tagów (proxy git i API odrzuca zapis tagów) — **tag zakłada użytkownik** (GitHub → Releases → nowy tag `p2-v1.0`, cel: gałąź `p2`). Kolejne sesje: tagi zawsze przez użytkownika.

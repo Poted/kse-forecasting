@@ -2,10 +2,44 @@
 
 Wygenerowano ze schematu (`common/db.py`): `uv run kse-data erd --out docs/erd.md`.
 Tabele `pse_*` nie mają kluczy obcych: łączy je czas (`dtime_utc`, koniec kwadransu UTC).
-Widoki godzinowe: `v_wykonanie_h`, `v_plan_h`, `v_rce_h`, `v_pogoda_h`, `v_p2_forecast_latest` (opis: `docs/etapy/P2.3.md`).
+Widoki godzinowe: `v_wykonanie_h`, `v_plan_h`, `v_rce_h`, `v_pogoda_h`, `v_p2_forecast_latest`, `v_p2_operational_eval` (opis: `docs/etapy/P2.3.md`).
 
 ```mermaid
 erDiagram
+    inz_dataset {
+        timestamptz dtime_utc PK
+        date business_date
+        int2 quarter_local
+        int2 dow
+        int2 month
+        float8 doy_sin
+        float8 doy_cos
+        int2 is_holiday
+        int2 is_weekend
+        float8 kse_pow_dem
+        float8 gen_fv
+        float8 gen_wi
+        float8 rez_under
+        float8 rez_over_demand
+        float8 dom_balance_exchange_par
+        float8 dom_balance_exchange_non_par
+        float8 gen_jgw_jgm_jgz_jga
+        float8 ogr_mwe
+        timestamptz plan_publication_ts_utc
+        float8 p2_net_demand_hat
+        float8 shortwave_radiation
+        float8 cloud_cover
+        float8 temperature_2m
+        float8 wind_speed_100m
+        float8 pv_red_balance_mw
+        float8 pv_red_network_mw
+        int2 y_red_balance
+        int2 y_red_network
+        int2 red_pv0_anomaly
+        timestamptz red_publication_ts_utc
+        float8 rce_pln
+        int2 y_rce_neg
+    }
     model_run {
         int4 run_id PK
         text model
